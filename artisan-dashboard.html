@@ -1,0 +1,2709 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="artisan_dashboard_page_title">لوحة التحكم | lharfa.ma</title>
+    <link rel="icon" type="image/jpeg" href="logo1.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/lucide@0.344.0"></script>
+    <link rel="stylesheet" href="styles.css">
+    <script src="translations.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js?v=20261125"></script>
+
+    <script src="api.js?v=20261125" defer></script>
+    <script src="i18n-manager.js" defer></script>
+    <script src="dashboard-common.js" defer></script>
+    <style>
+        /* ELITE ARTISAN DASHBOARD DESIGN SYSTEM - PREMIUM DARK MODE */
+        :root {
+            --primary-orange: #FF3F00;
+            --primary-orange-light: rgba(255, 63, 0, 0.1);
+            --bg-dark: #020617;
+            --card-bg: rgba(15, 23, 42, 0.6);
+            --border-color: rgba(255, 255, 255, 0.05);
+            --text-muted: #94A3B8;
+            --success-green: #10B981;
+            --shadow-premium: 0 20px 40px rgba(0, 0, 0, 0.2);
+            --transition-base: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --sidebar-width: 280px;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: white;
+            font-family: 'Tajawal', sans-serif;
+            margin: 0;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at 0% 0%, rgba(255, 63, 0, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 100% 100%, rgba(255, 63, 0, 0.02) 0%, transparent 50%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .dashboard-body-wrapper {
+            height: 100vh;
+            display: flex;
+            position: relative;
+        }
+
+        /* --- PREMIUM SCROLLBAR --- */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-orange);
+        }
+
+        
+        /* --- ELITE ARTISAN TOPBAR & UX ENHANCEMENTS --- */
+        
+        /* --- ELITE ARTISAN TOPBAR & LANGUAGE SWITCHER --- */
+        .artisan-topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 26px;
+            margin-bottom: 30px;
+            background: rgba(15, 23, 42, 0.55);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 26px;
+            gap: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            position: relative;
+            z-index: 50;
+        }
+
+        .artisan-topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .artisan-topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .artisan-topbar-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 18px;
+            border-radius: 15px;
+            font-size: 13.5px;
+            font-weight: 800;
+            background: rgba(255, 255, 255, 0.04);
+            color: #F8FAFC;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            text-decoration: none;
+            transition: var(--transition-base);
+        }
+
+        .artisan-topbar-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+            color: white;
+        }
+
+        .artisan-topbar-btn i {
+            width: 16px;
+            height: 16px;
+            color: var(--primary-orange);
+        }
+
+        .dashboard-lang-switcher {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dashboard-lang-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 16px;
+            border-radius: 15px;
+            background: rgba(255, 63, 0, 0.1);
+            border: 1px solid rgba(255, 63, 0, 0.25);
+            color: var(--primary-orange);
+            font-weight: 900;
+            font-size: 13px;
+            cursor: pointer;
+            transition: var(--transition-base);
+        }
+
+        .dashboard-lang-btn:hover {
+            background: var(--primary-orange);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 63, 0, 0.35);
+        }
+
+        .dashboard-lang-btn i {
+            width: 15px;
+            height: 15px;
+        }
+
+        .dashboard-lang-dropdown {
+            position: absolute;
+            top: calc(100% + 8px);
+            inset-inline-end: 0;
+            background: rgba(15, 23, 42, 0.96);
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 18px;
+            padding: 8px;
+            min-width: 175px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.45);
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+            z-index: 1000;
+        }
+
+        .dashboard-lang-dropdown.show {
+            display: flex;
+        }
+
+        .dashboard-lang-dropdown a {
+            padding: 9px 14px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 800;
+            border-radius: 12px;
+            transition: var(--transition-base);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .dashboard-lang-dropdown a:hover,
+        .dashboard-lang-dropdown a.active {
+            color: white;
+            background: rgba(255, 63, 0, 0.15);
+        }
+
+        .dashboard-lang-dropdown a.active .lang-check {
+            opacity: 1 !important;
+            stroke: #FF5500 !important;
+        }
+
+        .dashboard-lang-switcher.open .dashboard-lang-btn i:last-child {
+            transform: rotate(180deg);
+        }
+
+        /* --- HERO BANNER STYLING --- */
+        .hero-banner-premium {
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(2, 6, 23, 1) 100%);
+            border-radius: 40px;
+            padding: 45px;
+            color: white;
+            margin-bottom: 40px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .hero-banner-premium::before {
+            content: '';
+            position: absolute;
+            top: -100px;
+            right: -100px;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, var(--primary-orange) 0%, transparent 70%);
+            opacity: 0.12;
+            filter: blur(80px);
+            pointer-events: none;
+        }
+
+        /* --- MODERN SIDEBAR --- */
+        .artisan-sidebar {
+            width: var(--sidebar-width);
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(20px);
+            border-inline-end: 1px solid var(--border-color);
+            color: var(--text-muted);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            flex-shrink: 0;
+            z-index: 1000;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-brand {
+            padding: 40px 30px;
+            font-size: 32px;
+            font-weight: 950;
+            color: white;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-list-premium {
+            flex: 1;
+            padding: 10px 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .nav-link-premium {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 14px 20px;
+            border-radius: 18px;
+            color: var(--text-muted);
+            font-weight: 700;
+            text-decoration: none;
+            transition: var(--transition-base);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-link-premium:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-link-premium.active {
+            background: linear-gradient(90deg, rgba(255, 63, 0, 0.1) 0%, transparent 100%);
+            color: var(--primary-orange);
+            border-inline-start: 4px solid var(--primary-orange);
+            font-weight: 900;
+        }
+
+        /* --- CONTENT AREA --- */
+        .artisan-main {
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        /* --- MOBILE HAMBURGER --- */
+        .mobile-nav-toggle {
+            display: none;
+            position: fixed;
+            top: 25px;
+            right: 25px;
+            width: 65px;
+            height: 65px;
+            background: var(--primary-orange);
+            color: white;
+            border-radius: 22px;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            cursor: pointer;
+            box-shadow: 0 15px 35px rgba(255, 63, 0, 0.4);
+            border: none;
+            font-size: 24px;
+        }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(2, 6, 23, 0.7);
+            backdrop-filter: blur(5px);
+            z-index: 900;
+            opacity: 0;
+            transition: 0.3s;
+        }
+
+        /* --- GLASS COMPONENTS --- */
+        .glass-card-v3 {
+            background: var(--card-bg);
+            backdrop-filter: blur(25px);
+            border: 1px solid var(--border-color);
+            border-radius: 32px;
+            padding: 35px;
+            box-shadow: var(--shadow-premium);
+        }
+
+        .status-container {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(15px);
+            padding: 30px;
+            border-radius: 35px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            text-align: center;
+            min-width: 180px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+            transition: var(--transition-base);
+        }
+
+        .status-container:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        /* --- STAT CARDS --- */
+        .stat-grid-premium {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card-v3 {
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+            padding: 35px;
+            border-radius: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: var(--transition-base);
+        }
+
+        .stat-card-v3:hover {
+            transform: translateY(-5px);
+            background: rgba(15, 23, 42, 0.6);
+        }
+
+        .stat-icon-v3 {
+            width: 65px;
+            height: 65px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+        }
+
+        /* --- TOGGLE --- */
+        .toggle-switch {
+            width: 70px;
+            height: 36px;
+            background: #CBD5E1;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: 0.4s;
+            position: relative;
+            box-sizing: border-box;
+            border: 1px solid rgba(148, 163, 184, 0.55);
+        }
+
+        .toggle-switch.on {
+            background: #10B981;
+            border-color: #059669;
+        }
+
+        .toggle-thumb {
+            width: 28px;
+            height: 28px;
+            background: white;
+            border-radius: 50%;
+            transition: 0.4s;
+            box-shadow: 0 3px 8px rgba(15, 23, 42, 0.28);
+            position: absolute;
+            top: 3px;
+            left: 3px;
+        }
+
+        .toggle-switch.on .toggle-thumb {
+            left: 37px;
+        }
+
+        .tab-section {
+            display: none;
+            width: 100%;
+            animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .tab-section.active {
+            display: block;
+        }
+
+        @keyframes slideUpFade {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* --- ORDER CARDS --- */
+        .order-card-premium {
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(25px);
+            border-radius: 32px;
+            padding: 35px;
+            margin-bottom: 30px;
+            transition: var(--transition-base);
+            border: 1px solid var(--border-color);
+        }
+
+        .order-card-premium:hover {
+            transform: translateY(-5px);
+            background: rgba(15, 23, 42, 0.6);
+        }
+
+        /* --- MESSENGER REBORN --- */
+        .premium-messenger {
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(40px);
+            border-radius: 35px;
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            height: calc(100vh - 150px);
+            position: relative;
+        }
+
+        .ms-sidebar {
+            background: rgba(15, 23, 42, 0.2);
+            border-inline-end: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .ms-chat {
+            display: flex;
+            flex-direction: column;
+            background: rgba(2, 6, 23, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chat-list-item {
+            padding: 20px 25px;
+            display: flex;
+            gap: 15px;
+            cursor: pointer;
+            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+            position: relative;
+        }
+
+        .chat-list-item:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .chat-list-item.active {
+            background: rgba(255, 63, 0, 0.08);
+        }
+
+        .chat-list-item.active::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 15%;
+            height: 70%;
+            width: 4px;
+            background: var(--primary-orange);
+            border-radius: 0 4px 4px 0;
+            box-shadow: 0 0 15px var(--primary-orange);
+        }
+
+        .chat-bubble {
+            padding: 14px 18px;
+            border-radius: 20px;
+            font-weight: 600;
+            max-width: 75%;
+            line-height: 1.6;
+            position: relative;
+            font-size: 14.5px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            animation: bubbleAppear 0.3s ease-out;
+        }
+
+        @keyframes bubbleAppear {
+            from { opacity: 0; transform: translateY(10px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* In RTL: bubble-out (Sent) is on LEFT, bubble-in (Received) is on RIGHT */
+        .bubble-in {
+            background: rgba(255, 255, 255, 0.06);
+            color: #F1F5F9;
+            border-bottom-right-radius: 4px;
+            align-self: flex-start;
+            margin-inline-end: auto;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .bubble-out {
+            background: linear-gradient(135deg, var(--primary-orange), #FF5722);
+            color: white;
+            border-bottom-left-radius: 4px;
+            align-self: flex-end;
+            margin-inline-start: auto;
+            box-shadow: 0 8px 25px rgba(255, 63, 0, 0.2);
+        }
+
+        .chat-time {
+            font-size: 10px;
+            opacity: 0.6;
+            margin-top: 6px;
+            display: block;
+            font-weight: 800;
+        }
+
+        .bubble-out .chat-time {
+            color: rgba(255, 255, 255, 0.9);
+            text-align: left;
+        }
+        
+        .bubble-in .chat-time {
+            text-align: right;
+        }
+
+        /* --- INPUTS & BUTTONS --- */
+        .premium-input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.03) !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: 15px;
+            padding: 18px 25px;
+            color: white !important;
+            font-weight: 700;
+            transition: 0.3s;
+            margin-top: 10px;
+            font-size: 16px;
+        }
+
+        .premium-input:focus {
+            border-color: var(--primary-orange) !important;
+            background: rgba(255, 255, 255, 0.05) !important;
+            outline: none;
+        }
+
+        .form-label {
+            font-weight: 950;
+            font-size: 14px;
+            color: var(--text-muted) !important;
+            margin-bottom: 5px;
+            display: block;
+            padding-right: 5px;
+        }
+
+        .btn-premium {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 15px 35px;
+            border-radius: 22px;
+            font-weight: 900;
+            font-size: 16px;
+            transition: var(--transition-base);
+            cursor: pointer;
+            border: none;
+            text-decoration: none;
+        }
+
+        .btn-indigo {
+            background: linear-gradient(135deg, var(--primary-orange), #CC3D00);
+            color: white;
+            box-shadow: 0 10px 30px rgba(255, 63, 0, 0.3);
+        }
+
+        .btn-indigo:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(255, 63, 0, 0.4);
+        }
+
+        .btn-outline-premium {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: white;
+        }
+
+        .btn-outline-premium:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: white;
+        }
+
+        /* --- RESPONSIVE BREAKPOINTS --- */
+        @media (max-width: 1024px) {
+            .artisan-sidebar {
+                position: fixed;
+                right: -100%;
+                top: 0;
+                transform: translateX(100%);
+                width: 300px;
+                box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
+                background: rgba(15, 23, 42, 0.95);
+            }
+
+            .artisan-sidebar.active {
+                right: 0;
+                transform: translateX(0);
+            }
+
+            .mobile-nav-toggle {
+                display: flex;
+            }
+
+            .sidebar-overlay.active {
+                display: block;
+                opacity: 1;
+                pointer-events: auto;
+            }
+
+            .artisan-main {
+                padding: 25px 15px;
+                padding-top: 100px;
+            }
+
+            .status-container {
+                width: 100%;
+                min-width: unset;
+                margin-top: 30px;
+                padding: 25px;
+            }
+
+            .stat-grid-premium {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .premium-messenger {
+                display: block !important;
+                height: calc(100vh - 120px) !important;
+                border-radius: 25px;
+                position: relative;
+            }
+
+            .ms-sidebar {
+                display: block !important;
+                width: 100% !important;
+                height: 100% !important;
+                border-inline-end: none !important;
+            }
+
+            .ms-chat {
+                display: none !important;
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                z-index: 100;
+                background: #0B1120;
+            }
+
+            .premium-messenger.show-chat .ms-sidebar {
+                display: none !important;
+            }
+
+            .premium-messenger.show-chat .ms-chat {
+                display: flex !important;
+            }
+
+            .mobile-back-btn {
+                display: flex !important;
+                margin-inline-end: 10px;
+            }
+
+            #chatBody {
+                padding: 20px !important;
+            }
+
+            #chatHeader {
+                padding: 10px 15px !important;
+            }
+
+            .chat-bubble {
+                max-width: 90% !important;
+                padding: 12px 16px !important;
+                font-size: 14px !important;
+            }
+
+            .ms-chat {
+                flex: 1;
+                overflow: hidden;
+                display: flex;
+                flex-direction: column;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .artisan-main {
+                padding: 15px;
+                padding-top: 90px;
+            }
+
+            .hero-banner-premium h1 {
+                font-size: 32px !important;
+            }
+
+            .hero-banner-premium p {
+                font-size: 16px !important;
+            }
+
+            .glass-card-v3,
+            .order-card-premium {
+                padding: 25px !important;
+                border-radius: 25px !important;
+            }
+
+            .status-container {
+                margin-top: 20px !important;
+                padding: 20px !important;
+            }
+
+            .mobile-nav-toggle {
+                top: 15px;
+                right: 15px;
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+            }
+
+            .stat-icon-v3 {
+                width: 50px;
+                height: 50px;
+                font-size: 22px;
+            }
+
+            .stat-card-v3 {
+                padding: 20px;
+            }
+
+            #pNameView {
+                font-size: 24px !important;
+            }
+
+            .artisan-sidebar .sidebar-brand {
+                padding-top: 80px !important;
+                padding-right: 20px !important;
+            }
+
+            #artisanAvatarView {
+                width: 100px !important;
+                height: 100px !important;
+            }
+
+            .profile-grid,
+            .security-grid {
+                grid-template-columns: 1fr !important;
+                gap: 20px !important;
+            }
+
+            .form-group-full {
+                grid-column: span 1 !important;
+            }
+
+            .gallery-upload-zone {
+                padding: 35px 20px !important;
+            }
+        }
+
+        /* --- ARTISAN GALLERY PREVIEW --- */
+        .gallery-upload-zone {
+            border: 3px dashed rgba(255, 63, 0, 0.2);
+            border-radius: 30px;
+            padding: 50px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition-base);
+            background: rgba(255, 63, 0, 0.02);
+        }
+
+        .gallery-upload-zone:hover {
+            border-color: var(--primary-orange);
+            background: rgba(255, 63, 0, 0.05);
+            transform: translateY(-5px);
+        }
+
+        .gallery-preview-item {
+            position: relative;
+            border-radius: 20px;
+            overflow: hidden;
+            height: 150px;
+            box-shadow: var(--shadow-premium);
+            border: 2px solid var(--border-color);
+        }
+
+        .gallery-preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .remove-img {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 30px;
+            height: 30px;
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            box-shadow: 0 5px 10px rgba(239, 68, 68, 0.3);
+            transition: 0.2s;
+        }
+
+        .remove-img:hover {
+            transform: scale(1.1);
+            background: #dc2626;
+        }
+
+        /* --- QUICK UPLOAD BUTTON --- */
+        .quick-upload-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 28px;
+            background: linear-gradient(135deg, var(--primary-orange), #CC3D00);
+            color: white;
+            border: none;
+            border-radius: 18px;
+            font-weight: 900;
+            font-size: 15px;
+            cursor: pointer;
+            transition: var(--transition-base);
+            box-shadow: 0 8px 25px rgba(255, 63, 0, 0.35);
+            white-space: nowrap;
+            font-family: 'Tajawal', sans-serif;
+        }
+
+        .quick-upload-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 14px 35px rgba(255, 63, 0, 0.5);
+        }
+
+        .quick-upload-btn i {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* --- SHARE FAB --- */
+        .share-fab {
+            position: fixed;
+            bottom: 35px;
+            left: 35px;
+            z-index: 1500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 24px;
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            border-radius: 22px;
+            font-weight: 900;
+            font-size: 15px;
+            cursor: pointer;
+            transition: var(--transition-base);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.35);
+            font-family: 'Tajawal', sans-serif;
+        }
+
+        .share-fab:hover {
+            background: rgba(255, 63, 0, 0.15);
+            border-color: rgba(255, 63, 0, 0.4);
+            transform: translateY(-4px);
+            box-shadow: 0 20px 50px rgba(255, 63, 0, 0.25);
+        }
+
+        .share-fab i {
+            width: 20px;
+            height: 20px;
+            color: var(--primary-orange);
+        }
+
+        /* --- QUICK UPLOAD MODAL --- */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(2, 6, 23, 0.85);
+            backdrop-filter: blur(12px);
+            z-index: 3000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-backdrop.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .upload-modal {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 36px;
+            padding: 45px;
+            width: 100%;
+            max-width: 640px;
+            position: relative;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 63, 0, 0.05);
+            transform: scale(0.92) translateY(20px);
+            transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .modal-backdrop.open .upload-modal {
+            transform: scale(1) translateY(0);
+        }
+
+        .modal-close-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 42px;
+            height: 42px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 14px;
+            color: var(--text-muted);
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+        }
+
+        .modal-close-btn:hover {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+        .modal-upload-zone {
+            border: 2px dashed rgba(255, 63, 0, 0.25);
+            border-radius: 24px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition-base);
+            background: rgba(255, 63, 0, 0.02);
+            margin-top: 10px;
+        }
+
+        .modal-upload-zone:hover {
+            border-color: var(--primary-orange);
+            background: rgba(255, 63, 0, 0.06);
+            transform: translateY(-3px);
+        }
+
+        .modal-preview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 14px;
+            margin-top: 20px;
+        }
+
+        .modal-preview-item {
+            position: relative;
+            border-radius: 16px;
+            overflow: hidden;
+            height: 120px;
+            border: 2px solid var(--border-color);
+        }
+
+        .modal-preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .modal-preview-item .remove-img {
+            top: 7px;
+            right: 7px;
+            width: 26px;
+            height: 26px;
+            font-size: 13px;
+            border-radius: 8px;
+        }
+
+        /* --- TOAST NOTIFICATION --- */
+        #toastContainer {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: flex-end;
+        }
+
+        .toast-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 22px;
+            background: rgba(15, 23, 42, 0.92);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 18px;
+            color: white;
+            font-weight: 800;
+            font-size: 15px;
+            font-family: 'Tajawal', sans-serif;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            min-width: 260px;
+            max-width: 380px;
+            animation: toastIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .toast-item.toast-out {
+            animation: toastOut 0.35s ease forwards;
+        }
+
+        .toast-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .toast-success .toast-icon {
+            background: rgba(16, 185, 129, 0.15);
+            color: #10B981;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .toast-info .toast-icon {
+            background: rgba(59, 130, 246, 0.15);
+            color: #3B82F6;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+
+        .toast-error .toast-icon {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        @keyframes toastIn {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes toastOut {
+            from {
+                opacity: 1;
+                transform: translateX(0);
+            }
+
+            to {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+        }
+
+        /* --- MOBILE RESPONSIVE ADDITIONS --- */
+        @media (max-width: 768px) {
+            .share-fab {
+                bottom: 20px;
+                left: 20px;
+                padding: 13px 18px;
+                font-size: 14px;
+                border-radius: 18px;
+            }
+
+            .share-fab .fab-label {
+                display: none;
+            }
+
+            .share-fab {
+                padding: 14px;
+                border-radius: 18px;
+            }
+
+            .upload-modal {
+                padding: 28px 22px;
+                border-radius: 28px;
+            }
+
+            .modal-close-btn {
+                top: 14px;
+                left: 14px;
+            }
+
+            .portfolio-section-header {
+                flex-direction: column;
+                align-items: flex-start !important;
+                gap: 16px !important;
+            }
+
+            .quick-upload-btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            #toastContainer {
+                right: 15px;
+                bottom: 90px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .reviews-header-premium {
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                margin-bottom: 30px !important;
+            }
+
+            .reviews-header-premium h2 {
+                font-size: 28px !important;
+            }
+
+            #artisanReviewsList {
+                grid-template-columns: 1fr !important;
+            }
+
+            .rating-badge-premium {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="mobile.css">
+</head>
+
+<body style="margin: 0; padding: 0;">
+    <div id="toastContainer"></div>
+
+    <!-- Share My Profile FAB -->
+    <button class="share-fab" id="shareProfileFab" onclick="shareMyProfile()" title="مشاركة الملف الشخصي">
+        <i data-lucide="share-2"></i>
+        <span class="fab-label">مشاركة الملفي</span>
+    </button>
+
+    <!-- Quick Upload Modal -->
+    <div class="modal-backdrop" id="quickUploadModal" onclick="handleModalBackdropClick(event)">
+        <div class="upload-modal">
+            <button class="modal-close-btn" onclick="closeQuickUploadModal()">&times;</button>
+            <div style="text-align: center; margin-bottom: 30px;">
+                <div
+                    style="width: 60px; height: 60px; background: rgba(255,63,0,0.1); border: 1px solid rgba(255,63,0,0.2); border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px;">
+                    <i data-lucide="image-plus" style="width: 28px; height: 28px; color: var(--primary-orange);"></i>
+                </div>
+                <h3 style="font-weight: 950; font-size: 26px; margin-bottom: 6px;">إضافة عمل جديد</h3>
+                <p style="color: var(--text-muted); font-weight: 700; font-size: 15px;">شارك أحدث أعمالك مع الزبائن
+                    لزيادة فرصك في الحصول على مزيد من الطلبات</p>
+            </div>
+
+            <div>
+                <label class="form-label" style="margin-bottom: 8px;">عنوان العمل</label>
+                <input type="text" class="premium-input" id="uploadWorkTitle"
+                    placeholder="مثال: تركيب كهرباء شقة في الحي الجديد" style="margin-top: 0;">
+            </div>
+
+            <div style="margin-top: 20px;">
+                <label class="form-label" style="margin-bottom: 8px;">وصف العمل (اختياري)</label>
+                <textarea class="premium-input" id="uploadWorkDesc" rows="3"
+                    placeholder="اوصف تفاصيل الخدمة التي قدمتها..."
+                    style="height: auto; padding: 16px 20px; margin-top: 0;"></textarea>
+            </div>
+
+            <div style="margin-top: 20px;">
+                <label class="form-label" style="margin-bottom: 8px;">صور العمل</label>
+                <div class="modal-upload-zone" onclick="document.getElementById('modalImgInput').click()">
+                    <i data-lucide="upload-cloud"
+                        style="width: 40px; height: 40px; margin-bottom: 10px; color: var(--primary-orange);"></i>
+                    <p style="font-weight: 800; font-size: 15px; margin-bottom: 4px;">اسحب الصور هنا أو اضغط للاختيار
+                    </p>
+                    <p style="font-size: 13px; color: var(--text-muted); font-weight: 700;">PNG، JPG حتى 10MB</p>
+                    <input type="file" id="modalImgInput" hidden multiple accept="image/*"
+                        onchange="handleModalImgUpload(event)">
+                </div>
+                <div class="modal-preview-grid" id="modalPreviewGrid"></div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 30px;">
+                <button class="btn-premium btn-outline-premium" onclick="closeQuickUploadModal()"
+                    style="height: 58px; border-radius: 18px;">إلغاء</button>
+                <button class="btn-premium btn-indigo" onclick="submitQuickUpload()" id="modalSubmitBtn"
+                    style="height: 58px; border-radius: 18px;">
+                    <i data-lucide="upload" style="width: 18px;"></i> نشر العمل
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Navigation Toggle -->
+    <button class="mobile-nav-toggle" id="mobileNavToggle" onclick="toggleSidebar()">
+        <i data-lucide="menu"></i>
+    </button>
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+    <div class="dashboard-body-wrapper">
+        <!-- Sidebar Navigation -->
+        <aside class="artisan-sidebar">
+            <div class="sidebar-brand" style="padding: 30px 25px; margin-bottom: 20px;">
+                <a href="index.html" class="logo" style="text-decoration: none; color: #FF3F00; display: flex; align-items: center; gap: 12px; direction: ltr; font-weight: 950; font-size: 28px;">
+                    <img src="logo1.png" alt="lharfa.ma Logo" style="height: 40px; width: auto; border-radius: 8px;">
+                    <span>lharfa<span style="color: white;">.ma</span></span>
+                </a>
+            </div>
+
+            <nav class="nav-list-premium">
+                <div class="nav-link-premium active" onclick="switchDashboardTab('overview', this)">
+                    <i data-lucide="layout-grid"></i> <span data-i18n="dashboard_overview">الرئيسية</span>
+                </div>
+                <div class="nav-link-premium" onclick="switchDashboardTab('orders', this)">
+                    <i data-lucide="clipboard-list"></i> <span data-i18n="dashboard_orders">طلبات الحجز</span>
+                </div>
+                <div class="nav-link-premium" onclick="switchDashboardTab('messages', this)">
+                    <i data-lucide="message-circle"></i> <span data-i18n="dashboard_messages">الرسائل</span>
+                </div>
+                <div class="nav-link-premium" onclick="switchDashboardTab('subscription', this)">
+                    <i data-lucide="zap"></i> <span data-i18n="dashboard_upgrade">ترقية الحساب</span>
+                </div>
+                <div class="nav-link-premium" onclick="switchDashboardTab('reviews', this)">
+                    <i data-lucide="star"></i> <span data-i18n="reviews">التقييمات</span>
+                </div>
+                <div class="nav-link-premium" onclick="switchDashboardTab('profile', this)">
+                    <i data-lucide="user"></i> <span data-i18n="dashboard_profile">معلوماتك الشخصية</span>
+                </div>
+                <div class="nav-link-premium" onclick="window.location.href='shop.html'">
+                    <i data-lucide="shopping-bag"></i> <span data-i18n="artisan_shop">متجر المعدات</span>
+                </div>
+                <div class="nav-link-premium" onclick="window.location.href='artisan-profile.html?id=me'"
+                    style="border-top: 1px solid rgba(255,255,255,0.05); margin-top: 10px; padding-top: 20px;">
+                    <i data-lucide="external-link"></i> <span data-i18n="view_public_profile">معاينة الملف العام</span>
+                </div>
+            </nav>
+
+            <div style="padding: 20px 15px; border-top: 1px solid rgba(255,255,255,0.05);">
+                <div class="nav-link-premium" style="color: #ef4444;" onclick="logout()">
+                    <i data-lucide="log-out"></i> <span data-i18n="logout">خروج</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="artisan-main">
+            <!-- Artisan Topbar -->
+            <header class="artisan-topbar">
+                <div class="artisan-topbar-left">
+                    <button class="quick-upload-btn" onclick="openQuickUploadModal()" style="padding: 10px 22px; font-size: 13.5px; border-radius: 15px;">
+                        <i data-lucide="image-plus" style="width: 16px; height: 16px;"></i>
+                        <span data-i18n="add_work">رفع عمل جديد</span>
+                    </button>
+                    <a href="shop.html" class="artisan-topbar-btn">
+                        <i data-lucide="shopping-bag"></i>
+                        <span data-i18n="artisan_shop">متجر المعدات</span>
+                    </a>
+                </div>
+                <div class="artisan-topbar-right">
+                    <div class="dashboard-lang-switcher">
+                        <button class="dashboard-lang-btn" onclick="toggleArtisanLangDropdown(event)" aria-label="Change Language">
+                            <i data-lucide="globe"></i>
+                            <span id="currentArtisanLangLabel">AR</span>
+                            <i data-lucide="chevron-down" style="width: 13px; height: 13px;"></i>
+                        </button>
+                        <div id="artisanLangDropdown" class="dashboard-lang-dropdown">
+                            <div class="lang-dropdown-header" style="padding: 4px 8px 6px; font-size: 10px; font-weight: 800; color: #94A3B8; border-bottom: 1px solid rgba(255, 255, 255, 0.08); margin-bottom: 4px;">
+                                <span data-i18n="switch_lang">تغيير اللغة</span>
+                            </div>
+                            <a href="#" class="lang-option" data-lang-option="ar" onclick="switchPlatformLang('ar'); return false;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span class="lang-flag" style="font-size: 15px;">🇲🇦</span>
+                                    <span>العربية</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <span class="lang-badge" style="font-size: 10px; opacity: 0.6;">AR</span>
+                                    <i data-lucide="check" class="lang-check" style="width: 13px; height: 13px; opacity: 0;"></i>
+                                </div>
+                            </a>
+                            <a href="#" class="lang-option" data-lang-option="fr" onclick="switchPlatformLang('fr'); return false;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span class="lang-flag" style="font-size: 15px;">🇫🇷</span>
+                                    <span>Français</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <span class="lang-badge" style="font-size: 10px; opacity: 0.6;">FR</span>
+                                    <i data-lucide="check" class="lang-check" style="width: 13px; height: 13px; opacity: 0;"></i>
+                                </div>
+                            </a>
+                            <a href="#" class="lang-option" data-lang-option="en" onclick="switchPlatformLang('en'); return false;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span class="lang-flag" style="font-size: 15px;">🇬🇧</span>
+                                    <span>English</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <span class="lang-badge" style="font-size: 10px; opacity: 0.6;">EN</span>
+                                    <i data-lucide="check" class="lang-check" style="width: 13px; height: 13px; opacity: 0;"></i>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                    <button class="artisan-topbar-btn" onclick="logout()" title="تسجيل الخروج" style="color: #F87171; border-color: rgba(239, 68, 68, 0.2);">
+                        <i data-lucide="log-out" style="color: #EF4444;"></i>
+                        <span data-i18n="logout">خروج</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Overview Tab -->
+            <section id="tab-overview" class="tab-section active">
+                <div class="hero-banner-premium" style="background: linear-gradient(135deg, #020617 0%, #0F172A 100%);">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap-reverse; gap: 40px;">
+                        <!-- Status Section on the Left (based on screenshot) -->
+                        <div class="status-container">
+                            <p style="font-size: 16px; font-weight: 950; margin-bottom: 5px; color: white;"
+                                data-i18n="is_working_now">واش خدام دابا؟</p>
+                            <div class="toggle-switch on" id="artisanStatusToggle" role="switch" aria-checked="true"
+                                tabindex="0" onclick="handleStatusToggle()"
+                                onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault(); handleStatusToggle();}"
+                                style="box-shadow: 0 0 20px rgba(255, 63, 0, 0.4);">
+                                <div class="toggle-thumb"></div>
+                            </div>
+                            <span id="statusBadgeLarge" class="status-badge"
+                                style="min-width: 150px; height: 44px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 950; padding: 0 18px; border-radius: 50px; background: rgba(16, 185, 129, 0.15); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.2);"
+                                >● خدام (متاح)</span>
+                        </div>
+
+                        <!-- Welcome Message on the Right -->
+                        <div style="text-align: right; flex: 1;">
+                            <h1 style="font-size: 55px; font-weight: 950; margin-bottom: 15px; ">
+                                <span data-i18n="welcome_back">مرحباً بعودتك</span>، <span id="artisanName"
+                                    class="text-orange"
+                                    style="background: linear-gradient(135deg, #FF3F00 0%, #FFB800 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">محمد</span> <i data-lucide="sparkles" style="color: var(--primary-orange); display: inline-block; vertical-align: middle;"></i>
+                            </h1>
+                            <p style="font-size: 24px; opacity: 0.9; font-weight: 800; line-height: 1.5;">
+                                <span data-i18n="ready_for_today">واجد للخدمة اليوم؟ كاين طلبات جديدة كتسناك</span>
+                                <span style="color: var(--primary-orange);">فـ <span
+                                        id="artisanCityDisplay">تارودانت</span></span>.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stat-grid-premium">
+                    <div class="stat-card-v3" style="border-bottom: 4px solid #3B82F6;">
+                        <div class="stat-icon-v3"
+                            style="background: rgba(59, 130, 246, 0.1); color: #3B82F6; order: 2;">
+                            <i data-lucide="clipboard-list"></i>
+                        </div>
+                        <div style="text-align: right; order: 1;">
+                            <p style="font-size: 14px; font-weight: 900; color: var(--text-muted); margin-bottom: 5px;"
+                                data-i18n="today_services">خدمات اليوم</p>
+                            <h3 style="font-size: 36px; font-weight: 950; color: white;" id="statTodayOrders">5</h3>
+                        </div>
+                    </div>
+                    <div class="stat-card-v3" style="border-bottom: 4px solid #10B981;">
+                        <div class="stat-icon-v3"
+                            style="background: rgba(16, 185, 129, 0.1); color: #10B981; order: 2;">
+                            <i data-lucide="target"></i>
+                        </div>
+                        <div style="text-align: right; order: 1;">
+                            <p style="font-size: 14px; font-weight: 900; color: var(--text-muted); margin-bottom: 5px;"
+                                data-i18n="available_leads">الطلبات المتاحة</p>
+                            <h3 style="font-size: 36px; font-weight: 950; color: white;" id="statAvailableLeads">19</h3>
+                        </div>
+                    </div>
+                    <div class="stat-card-v3" style="border-bottom: 4px solid #F59E0B;">
+                        <div class="stat-icon-v3"
+                            style="background: rgba(245, 158, 11, 0.1); color: #F59E0B; order: 2;">
+                            <i data-lucide="star"></i>
+                        </div>
+                        <div style="text-align: right; order: 1;">
+                            <p style="font-size: 14px; font-weight: 900; color: var(--text-muted); margin-bottom: 5px;"
+                                data-i18n="customer_rating">تقييم الزبناء</p>
+                            <h3 style="font-size: 36px; font-weight: 950; color: white;" id="statCustomerRating">0.0</h3>
+                        </div>
+                    </div>
+                    <div class="stat-card-v3" style="border-bottom: 4px solid #8B5CF6;">
+                        <div class="stat-icon-v3"
+                            style="background: rgba(139, 92, 246, 0.1); color: #8B5CF6; order: 2;">
+                            <i data-lucide="eye"></i>
+                        </div>
+                        <div style="text-align: right; order: 1;">
+                            <p style="font-size: 14px; font-weight: 900; color: var(--text-muted); margin-bottom: 5px;"
+                                data-i18n="analytics">حصيلة الزيارات</p>
+                            <h3 style="font-size: 36px; font-weight: 950; color: white;" id="statProfileViews">0</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 60px;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 35px;">
+                        <h3 style="font-weight: 950; font-size: 28px; color: white;" data-i18n="latest_orders">آخر
+                            الطلبات</h3>
+                        <a href="#"
+                            style="color: var(--primary-orange); font-weight: 950; text-decoration: none; font-size: 16px;"
+                            onclick="switchDashboardTab('orders')" data-i18n="view_all">عرض الكل</a>
+                    </div>
+                    <div id="latestRequests"
+                        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100%, 1fr)); gap: 20px;">
+                        <!-- Requests injected by JS -->
+                    </div>
+                </div>
+
+                <!-- Latest Messages -->
+                <div style="margin-top: 50px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                        <h3 style="font-weight: 950; font-size: 26px; color: white; display: inline-flex; align-items: center; gap: 8px;" data-i18n="latest_messages">أحدث الرسائل <i data-lucide="message-square" size="22"></i></h3>
+                        <a href="#" style="color: var(--primary-orange); font-weight: 950; text-decoration: none;"
+                            onclick="switchDashboardTab('messages')" data-i18n="view_all">عرض الكل</a>
+                    </div>
+                    <div id="latestMessages" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
+                        <!-- Messages injected by JS -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Orders Tab -->
+            <section id="tab-orders" class="tab-section">
+                <div class="orders-header-premium"
+                    style="display: flex; justify-content: space-between; align-items: center; gap: 20px; margin-bottom: 40px; flex-wrap: wrap;">
+                    <h2 style="font-weight: 950; font-size: 28px; margin: 0;" data-i18n="orders_history">سجل الطلبات
+                    </h2>
+                    <div
+                        style="display: flex; gap: 8px; background: rgba(15, 23, 42, 0.6); padding: 6px; border-radius: 20px; border: 1px solid var(--border-color); overflow-x: auto; max-width: 100%; -webkit-overflow-scrolling: touch;">
+                        <button class="btn-premium btn-indigo"
+                            style="padding: 8px 16px; border-radius: 14px; font-size: 14px; white-space: nowrap;"
+                            onclick="renderFullOrders('all')" data-i18n="all">الكل</button>
+                        <button class="btn-premium btn-outline-premium"
+                            style="padding: 8px 16px; border-radius: 14px; font-size: 14px; white-space: nowrap;"
+                            onclick="renderFullOrders('accepted')" data-i18n="accepted">مقبولة</button>
+                        <button class="btn-premium btn-outline-premium"
+                            style="padding: 8px 16px; border-radius: 14px; font-size: 14px; white-space: nowrap;"
+                            onclick="renderFullOrders('completed')" data-i18n="completed">مكتملة</button>
+                    </div>
+                </div>
+                <div id="fullOrdersList" style="display: flex; flex-direction: column; gap: 20px;">
+                    <!-- Full list injected by JS -->
+                </div>
+            </section>
+
+            <!-- Messages Tab -->
+            <section id="tab-messages" class="tab-section">
+                <div class="premium-messenger glass-card-v3" style="padding: 0;">
+                    <div class="ms-sidebar"
+                        style="background: rgba(15, 23, 42, 0.4); border-inline-end: 1px solid var(--border-color); display: flex; flex-direction: column;">
+                        <div style="padding: 30px; border-bottom: 1px solid var(--border-color);">
+                            <h3 style="font-weight: 950; margin: 0; display: inline-flex; align-items: center; gap: 8px;" data-i18n="messages_title">الرسائل <i data-lucide="message-square" size="20"></i></h3>
+                        </div>
+                        <div id="artisanChatList" style="flex: 1; overflow-y: auto;">
+                            <!-- Chats injected by JS -->
+                        </div>
+                    </div>
+                    <div class="ms-chat"
+                        style="display: flex; flex-direction: column; background: transparent; position: relative;">
+                        <div id="chatHeader"
+                            style="padding: 20px 25px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: space-between; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(10px); gap: 15px; flex-wrap: nowrap;">
+                            <button class="btn-premium btn-outline-premium"
+                                style="border-radius: 10px; padding: 8px 16px; font-size: 12px; flex-shrink: 0; white-space: nowrap; display: flex; align-items: center; gap: 6px;"
+                                onclick="handleQuickCall()">
+                                <i data-lucide="phone" style="width: 14px; height: 14px;"></i> <span
+                                    data-i18n="quick_call">اتصال</span>
+                            </button>
+                            <div style="display: flex; align-items: center; flex: 1; min-width: 0; justify-content: flex-end; gap: 12px;">
+                                <div style="text-align: right; min-width: 0; display: flex; flex-direction: column; justify-content: center;">
+                                    <h4 id="chatName"
+                                        style="font-weight: 950; font-size: 16px; margin: 0; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                        -</h4>
+                                    <p
+                                        style="font-size: 11px; color: var(--success-green); font-weight: 900; margin: 2px 0 0 0; opacity: 0.85; display: flex; align-items: center; gap: 4px; justify-content: flex-end;">
+                                        <span style="width: 6px; height: 6px; background: #10B981; border-radius: 50%;"></span>
+                                        <span data-i18n="online_now">نشط الآن</span></p>
+                                </div>
+                                <div style="position: relative; flex-shrink: 0;">
+                                    <img src="" id="chatAvatar"
+                                        style="width: 44px; height: 44px; border-radius: 14px; object-fit: cover; border: 2px solid var(--primary-orange); box-shadow: 0 4px 12px rgba(255, 63, 0, 0.15);">
+                                    <span
+                                        style="position: absolute; bottom: -3px; left: -3px; width: 12px; height: 12px; background: #10B981; border: 2.5px solid #0F172A; border-radius: 50%;"></span>
+                                </div>
+                                <button class="mobile-back-btn"
+                                    style="display: none; background: transparent; border: none; color: white; width: 35px; height: 35px; align-items: center; justify-content: center; flex-shrink: 0; cursor: pointer;"
+                                    onclick="closeMobileChat()">
+                                    <i data-lucide="chevron-right" style="width: 24px; height: 24px;"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div id="chatBody"
+                            style="flex: 1; padding: 35px; overflow-y: auto; background: transparent; display: flex; flex-direction: column; gap: 20px;">
+                            <div style="height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0.3; text-align: center;">
+                                <i data-lucide="message-circle" style="width: 80px; height: 80px; margin-bottom: 20px;"></i>
+                                <h3 style="font-weight: 950; margin: 0;">اختر محادثة للبدء</h3>
+                                <p style="font-weight: 700; font-size: 14px;">تواصل مع زبنائك بضغطة زر</p>
+                            </div>
+                        </div>
+                        <div
+                            style="padding: 18px 25px; border-top: 1px solid var(--border-color); background: rgba(255, 255, 255, 0.02); display: flex; gap: 12px; align-items: center; flex-wrap: nowrap;">
+                            <button class="btn-premium btn-indigo"
+                                style="width: 54px; height: 54px; min-width: 54px; border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; padding: 0; box-shadow: 0 8px 20px rgba(255, 63, 0, 0.25);"
+                                onclick="sendChatMessage()">
+                                <i data-lucide="send-horizontal" style="width: 22px; height: 22px;"></i>
+                            </button>
+                            <input type="text" class="premium-input" id="chatMsgInput" placeholder="اكتب رسالة..."
+                                data-i18n-placeholder="write_message_placeholder"
+                                style="flex: 1; height: 54px; font-size: 15px; margin-top: 0; padding: 0 18px; border-radius: 14px; font-family: 'Tajawal', sans-serif; font-weight: 600;"
+                                onkeyup="if(event.key==='Enter') sendChatMessage()">
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Subscription Tab -->
+            <section id="tab-subscription" class="tab-section">
+                <div style="text-align: center; margin-bottom: 60px;">
+                    <h2
+                        style="font-weight: 950; font-size: 42px; margin-bottom: 15px; background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.7) 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">
+                        طور خدمتك ؤ بان نتا اللول</h2>
+                    <p
+                        style="color: var(--text-muted); font-size: 18px; max-width: 600px; margin: 0 auto; font-weight: 700;">
+                        اختاري الباقة اللي غتخليك تجيب زبناء كتر ؤ تكبر خدمتك فمنصتنا</p>
+                </div>
+
+                <div
+                    style="display: flex; gap: 30px; justify-content: center; align-items: stretch; flex-wrap: wrap; perspective: 1000px; padding: 20px;">
+                    <!-- Basic Plan -->
+                    <div class="glass-card-v3"
+                        style="width: 360px; padding: 45px 35px; border: 1px solid rgba(255,255,255,0.05); text-align: center; display: flex; flex-direction: column; transition: transform 0.3s ease;">
+                        <h4 style="font-weight: 900; font-size: 20px; color: var(--text-muted); margin-bottom: 15px;"
+                            data-i18n="basic_plan">الباقة العادية</h4>
+                        <div style="font-size: 48px; font-weight: 950; color: white; margin-bottom: 30px;">0<span
+                                style="font-size: 16px; opacity: 0.5; font-weight: 800; margin-inline-start: 5px;">DH/شهر</span>
+                        </div>
+
+                        <div style="flex: 1; text-align: right; margin-bottom: 40px;">
+                            <div
+                                style="margin-bottom: 18px; display: flex; align-items: center; gap: 12px; color: var(--text-muted); font-weight: 700; font-size: 15px;">
+                                <i data-lucide="check-circle" style="width: 18px; color: rgba(255,255,255,0.2);"></i>
+                                <span>ظهور عادي فالبحث</span>
+                            </div>
+                            <div
+                                style="margin-bottom: 18px; display: flex; align-items: center; gap: 12px; color: var(--text-muted); font-weight: 700; font-size: 15px;">
+                                <i data-lucide="check-circle" style="width: 18px; color: rgba(255,255,255,0.2);"></i>
+                                <span>استقبال طلبات محدودة</span>
+                            </div>
+                            <div
+                                style="margin-bottom: 18px; display: flex; align-items: center; gap: 12px; color: var(--text-muted); font-weight: 700; font-size: 15px; opacity: 0.4;">
+                                <i data-lucide="lock" style="width: 18px;"></i> <span>علامة "موثق" ذهبية</span>
+                            </div>
+                        </div>
+
+                        <button class="btn-premium btn-outline-premium"
+                            style="width: 100%; height: 55px; opacity: 0.7; cursor: default;"
+                            onclick="PlatformActions.currentPlan()" data-i18n="current_plan">باقتك الحالية</button>
+                    </div>
+
+                    <!-- Elite/Pro Plan -->
+                    <div class="glass-card-v3"
+                        style="width: 400px; padding: 50px 40px; border: 1px solid var(--primary-orange); text-align: center; display: flex; flex-direction: column; position: relative; background: linear-gradient(180deg, rgba(255, 63, 0, 0.05) 0%, rgba(15, 23, 42, 0.4) 100%); box-shadow: 0 30px 60px rgba(0,0,0,0.5), 0 0 20px rgba(255, 63, 0, 0.1);">
+                        <!-- Glowing Accent -->
+                        <div
+                            style="position: absolute; top: -1px; left: 50%; transform: translateX(-50%); width: 60%; height: 2px; background: linear-gradient(90deg, transparent, var(--primary-orange), transparent);">
+                        </div>
+
+                        <div
+                            style="background: var(--primary-orange); color: white; font-size: 11px; font-weight: 950; padding: 6px 15px; border-radius: 30px; position: absolute; top: -15px; left: 50%; transform: translateX(-50%); box-shadow: 0 5px 15px rgba(255, 63, 0, 0.3);">
+                            <span style="display:inline-flex; align-items:center; gap:4px;">الأكثر مبيعاً <i data-lucide="zap" size="13"></i></span></div>
+
+                        <h4
+                            style="font-weight: 950; font-size: 26px; color: var(--primary-orange); margin-bottom: 10px;">
+                            حساب ذهبي (Elite)</h4>
+                        <p style="font-size: 13px; color: var(--text-muted); font-weight: 800; margin-bottom: 25px;">باش
+                            تولي نتا الأول فمنطقتك</p>
+
+                        <div
+                            style="font-size: 56px; font-weight: 950; color: white; margin-bottom: 30px; display: flex; align-items: center; justify-content: center; gap: 5px;">
+                            100<span style="font-size: 18px; opacity: 0.6; font-weight: 800;">DH</span>
+                        </div>
+
+                        <div style="flex: 1; text-align: right; margin-bottom: 40px;">
+                            <div
+                                style="margin-bottom: 20px; display: flex; align-items: center; gap: 15px; color: white; font-weight: 800; font-size: 16px;">
+                                <div
+                                    style="width: 30px; height: 30px; border-radius: 8px; background: rgba(255, 63, 0, 0.1); display: flex; align-items: center; justify-content: center; color: var(--primary-orange);">
+                                    <i data-lucide="trending-up" style="width: 18px;"></i>
+                                </div>
+                                <span>تصدر كاع نتائج البحث</span>
+                            </div>
+                            <div
+                                style="margin-bottom: 20px; display: flex; align-items: center; gap: 15px; color: white; font-weight: 800; font-size: 16px;">
+                                <div
+                                    style="width: 30px; height: 30px; border-radius: 8px; background: rgba(255, 63, 0, 0.1); display: flex; align-items: center; justify-content: center; color: var(--primary-orange);">
+                                    <i data-lucide="shield-check" style="width: 18px;"></i>
+                                </div>
+                                <span>شارة "موثق" ذهبية ملكية</span>
+                            </div>
+                            <div
+                                style="margin-bottom: 20px; display: flex; align-items: center; gap: 15px; color: white; font-weight: 800; font-size: 16px;">
+                                <div
+                                    style="width: 30px; height: 30px; border-radius: 8px; background: rgba(255, 63, 0, 0.1); display: flex; align-items: center; justify-content: center; color: var(--primary-orange);">
+                                    <i data-lucide="zap" style="width: 18px;"></i>
+                                </div>
+                                <span>طلبات غير محدودة كاع</span>
+                            </div>
+                        </div>
+
+                        <button class="btn-premium btn-indigo"
+                            style="width: 100%; height: 60px; font-size: 18px; border-radius: 18px; box-shadow: 0 10px 20px rgba(255, 63, 0, 0.2);"
+                            onclick="handleSubscriptionUpgrade()">
+                            اشترك الآن ؤ كبر خدمتك
+                        </button>
+                        <p id="subscriptionStatus"
+                            style="margin: 18px 0 0; min-height: 24px; color: #10B981; font-size: 14px; font-weight: 800;">
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Reviews Tab -->
+            <section id="tab-reviews" class="tab-section">
+                <div class="reviews-header-premium"
+                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 45px; flex-wrap: wrap; gap: 20px;">
+                    <div>
+                        <h2 style="font-weight: 950; font-size: 34px; margin-bottom: 8px;" data-i18n="reviews">ماذا يقول
+                            الزبناء؟</h2>
+                        <p style="color: var(--text-muted); font-weight: 800; font-size: 15px;">آراء حقيقية من أشخاص
+                            تعاملت معهم</p>
+                    </div>
+                    <div class="rating-badge-premium"
+                        style="display: flex; align-items: center; gap: 15px; background: rgba(245, 158, 11, 0.08); padding: 12px 25px; border-radius: 20px; border: 1px solid rgba(245, 158, 11, 0.15); box-shadow: 0 10px 20px rgba(0,0,0,0.1);">
+                        <div style="display: flex; color: #F59E0B; gap: 4px;">
+                            <i data-lucide="star" style="fill: #F59E0B; width: 18px;"></i>
+                        </div>
+                        <span style="font-weight: 950; font-size: 22px; color: #F59E0B; ">4.9 /
+                            5.0</span>
+                    </div>
+                </div>
+                <div id="artisanReviewsList"
+                    style="display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 25px;">
+                    <!-- Reviews injected by JS -->
+                </div>
+            </section>
+
+            <!-- Profile Tab -->
+            <section id="tab-profile" class="tab-section">
+                <div class="glass-card-v3" style="padding: 40px;">
+                    <div class="profile-header-mobile"
+                        style="display: flex; gap: 30px; align-items: center; margin-bottom: 40px; flex-wrap: wrap;">
+                        <div style="position: relative;">
+                            <div
+                                style="width: 120px; height: 120px; border-radius: 35px; background: linear-gradient(135deg, #1E293B, #0F172A); display: flex; align-items: center; justify-content: center; border: 3px solid rgba(255,255,255,0.05); overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+                                <img id="artisanAvatarView"
+                                    src="https://ui-avatars.com/api/?name=محمد&background=FF4500&color=fff&size=200"
+                                    style="width: 100%; height: 100%; object-fit: cover;">
+                            </div>
+                            <label for="pAvatar"
+                                style="position: absolute; bottom: -5px; right: -5px; width: 35px; height: 35px; background: var(--primary-orange); color: white; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid #0B1120; box-shadow: 0 5px 15px rgba(255, 63, 0, 0.4);"
+                                class="hover-scale">
+                                <i data-lucide="camera" style="width: 16px;"></i>
+                                <input type="file" id="pAvatar" hidden accept="image/*"
+                                    onchange="uploadArtisanAvatar(event)">
+                            </label>
+                        </div>
+                        <div style="flex: 1; min-width: 200px;">
+                            <h2 style="font-weight: 950; font-size: 28px; margin-bottom: 8px; color: white;"
+                                id="pNameView">محمد</h2>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <div
+                                    style="background: rgba(16, 185, 129, 0.1); color: #10B981; padding: 6px 15px; border-radius: 10px; font-weight: 900; font-size: 12px; display: flex; align-items: center; gap: 5px; border: 1px solid rgba(16, 185, 129, 0.1);">
+                                    <i data-lucide="shield-check" style="width: 14px;"></i> <span
+                                        data-i18n="verified_account">حساب موثق</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="profile-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px;">
+                        <div class="form-group">
+                            <label class="form-label" data-i18n="full_name">الاسم الكامل</label>
+                            <input type="text" class="premium-input" id="pNameInput" value="محمد">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" data-i18n="specialty">التخصص المهني</label>
+                            <select class="premium-input" id="pSpecialty">
+                                <option value="transport" selected>النقل</option>
+                                <option value="electricity">الكهرباء</option>
+                                <option value="plumbing">السباكة</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" data-i18n="city">المدينة</label>
+                            <select class="premium-input" id="pCity">
+                                <option value="marrakech" selected>مراكش</option>
+                                <option value="agadir">أكادير</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" data-i18n="years_exp">سنوات الخبرة</label>
+                            <input type="number" class="premium-input" id="pExpInput" value="5">
+                        </div>
+                        <div class="form-group form-group-full" style="grid-column: span 2;">
+                            <label class="form-label" data-i18n="p_bio">النبذة المهنية (Bio)</label>
+                            <textarea class="premium-input" id="pBioInput" rows="4" style="height: auto; padding: 20px;"
+                                placeholder="تحدث عن خبرتك ومهاراتك للزبائن..."></textarea>
+                        </div>
+                        <div class="form-group form-group-full" style="grid-column: span 2;">
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <label class="form-label" style="margin-bottom: 0;">معرض الأعمال (Portfolio)</label>
+                                <button class="btn-premium"
+                                    style="padding: 6px 15px; font-size: 12px; border-radius: 10px; background: rgba(255,255,255,0.05); color: white;"
+                                    onclick="openQuickUploadModal()">
+                                    <i data-lucide="plus-circle" style="width: 14px;"></i> <span
+                                        data-i18n="add_work">رفع عمل جديد</span>
+                                </button>
+                            </div>
+                            <div class="gallery-upload-zone" id="galleryZone"
+                                onclick="document.getElementById('pGalleryInput').click()" style="padding: 40px 20px;">
+                                <i data-lucide="image-plus"
+                                    style="width: 40px; height: 40px; margin-bottom: 12px; color: var(--primary-orange);"></i>
+                                <p style="font-weight: 800; font-size: 14px; color: white;" data-i18n="add_images_desc">
+                                    اضغط لإضافة صور لأعمالك السابقة لإقناع الزبائن</p>
+                                <input type="file" id="pGalleryInput" hidden multiple accept="image/*"
+                                    onchange="handleGalleryUpload(event)">
+                            </div>
+                            <div id="pGalleryPreview"
+                                style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 15px; margin-top: 20px;">
+                            </div>
+                        </div>
+
+                        <div class="form-group-full" style="grid-column: span 2; padding-top: 20px;">
+                            <button class="btn-premium btn-indigo" onclick="saveArtisanProfile(this)"
+                                data-i18n="save_changes"
+                                style="width: 100%; height: 60px; font-size: 16px; border-radius: 18px;">
+                                <i data-lucide="save"></i> حفظ التغييرات
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Security Section -->
+                <div class="glass-card-v3" style="margin-top: 30px; padding: 35px;">
+                    <h3 style="font-weight: 950; font-size: 22px; margin-bottom: 25px; color: white;"
+                        data-i18n="account_security">أمان الحساب</h3>
+                    <div class="security-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div class="form-group">
+                            <label class="form-label" data-i18n="new_password">كلمة مرور جديدة</label>
+                            <input type="password" class="premium-input" id="newPassInput" placeholder="********">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" data-i18n="confirm_new_password">تأكيد كلمة المرور</label>
+                            <input type="password" class="premium-input" id="confirmPassInput" placeholder="********">
+                        </div>
+                        <div class="form-group-full" style="grid-column: span 2;">
+                            <button class="btn-premium btn-outline-premium"
+                                style="width: 100%; height: 55px; font-weight: 800; border-radius: 15px;"
+                                onclick="updatePassword()">تحديث كلمة المرور</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        const artisanDashboardData = { orders: [], chats: [], messages: [], reviews: [], user: null, artisan: null };
+
+        async function loadArtisanDashboardData() {
+            if (!window.api) return artisanDashboardData;
+            const current = await api.getCurrentUser();
+            if (!current.success || !current.user) {
+                window.location.href = 'login.html';
+                return artisanDashboardData;
+            }
+            artisanDashboardData.user = current.user;
+            const artisanRes = await api.getArtisanById('me');
+            artisanDashboardData.artisan = artisanRes.success ? artisanRes.data : null;
+            const artisanId = artisanDashboardData.artisan?.id;
+            const [bookingsRes, messagesRes, reviewsRes] = await Promise.all([
+                artisanId ? api.getBookings({ artisan_id: artisanId }) : Promise.resolve({ success: true, data: [] }),
+                api.getMessages(),
+                artisanId ? api.getReviews(artisanId) : Promise.resolve({ success: true, data: [] })
+            ]);
+            artisanDashboardData.orders = bookingsRes.success ? (bookingsRes.data || []) : [];
+            artisanDashboardData.messages = messagesRes.success ? (messagesRes.data || []) : [];
+            artisanDashboardData.reviews = reviewsRes.success ? (reviewsRes.data || []) : [];
+            artisanDashboardData.chats = [];
+            updateArtisanStats();
+            return artisanDashboardData;
+        }
+
+        function updateArtisanStats() {
+            const today = new Date().toISOString().slice(0, 10);
+            const todayOrders = artisanDashboardData.orders.filter((o) => o.date === today || (o.created_at || '').slice(0, 10) === today).length;
+            const availableLeads = artisanDashboardData.orders.filter((o) => ['new', 'pending'].includes(o.status)).length;
+            const rating = artisanDashboardData.reviews.length
+                ? (artisanDashboardData.reviews.reduce((sum, r) => sum + Number(r.rating || 0), 0) / artisanDashboardData.reviews.length).toFixed(1)
+                : '0.0';
+            const todayEl = document.getElementById('statTodayOrders');
+            const leadsEl = document.getElementById('statAvailableLeads');
+            const ratingEl = document.getElementById('statCustomerRating');
+            const viewsEl = document.getElementById('statProfileViews');
+            if (todayEl) todayEl.textContent = String(todayOrders);
+            if (leadsEl) leadsEl.textContent = String(availableLeads);
+            if (ratingEl) ratingEl.textContent = rating;
+            if (viewsEl) viewsEl.textContent = '0';
+        }
+
+        function t(key) {
+            return (window.I18nManager && window.I18nManager.getString(key)) || key;
+        }
+
+        function toggleSidebar() {
+            document.querySelector('.artisan-sidebar').classList.toggle('active');
+            document.getElementById('sidebarOverlay').classList.toggle('active');
+        }
+
+        function switchDashboardTab(tabId, el) {
+            if (window.innerWidth <= 1024) toggleSidebar();
+
+            document.querySelectorAll('.nav-link-premium').forEach(l => l.classList.remove('active'));
+            if (el) el.classList.add('active');
+            else {
+                const matchingLink = Array.from(document.querySelectorAll('.nav-link-premium'))
+                    .find(link => link.getAttribute('onclick')?.includes(`'${tabId}'`));
+                if (matchingLink) matchingLink.classList.add('active');
+            }
+
+            document.querySelectorAll('.tab-section').forEach(p => p.classList.remove('active'));
+            const target = document.getElementById(`tab-${tabId}`);
+            if (target) target.classList.add('active');
+            else {
+                console.warn(`Tab not found: tab-${tabId}`);
+                return;
+            }
+
+            if (tabId === 'overview') updateArtisanLangBadge();
+            renderOverview();
+            if (tabId === 'orders') renderFullOrders();
+            if (tabId === 'messages') renderArtisanChats();
+            if (tabId === 'subscription') {
+                const status = document.getElementById('subscriptionStatus');
+                if (status && localStorage.getItem('lharfa_artisan_subscription') === 'elite_requested') {
+                    status.textContent = 'تم تسجيل طلب الترقية. فريق الإدارة غادي يتواصل معك.';
+                }
+                if (window.lucide) lucide.createIcons();
+            }
+            if (tabId === 'reviews') renderReviews();
+            if (tabId === 'profile') loadArtisanProfile();
+
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function handleSubscriptionUpgrade() {
+            localStorage.setItem('lharfa_artisan_subscription', 'elite_requested');
+            const status = document.getElementById('subscriptionStatus');
+            if (status) status.textContent = 'تم تسجيل طلب الترقية. فريق الإدارة غادي يتواصل معك.';
+            if (window.DashboardManager) {
+                DashboardManager.showToast('تم تسجيل طلب الترقية بنجاح', 'success');
+            }
+        }
+
+        function renderOverview() {
+            const list = document.getElementById('latestRequests');
+            if (!list) return;
+            const newOrders = artisanDashboardData.orders.filter(o => o.status === 'new');
+
+            list.innerHTML = newOrders.map(order => `
+                <div class="order-card-premium" style="padding: 20px;">
+                    <div style="display: flex; flex-direction: column; gap: 20px; margin-bottom: 25px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; gap: 15px;">
+                             <div style="background: var(--primary-orange-light); color: var(--primary-orange); padding: 8px 15px; border-radius: 12px; font-weight: 950; font-size: 13px; border: 1px solid rgba(255, 63, 0, 0.2);">
+                                ${order.service}
+                            </div>
+                            <div style="display: flex; gap: 15px; align-items: center; text-align: right;">
+                                <div>
+                                    <h4 style="font-weight: 950; font-size: 18px; margin: 0; color: white;">${order.client}</h4>
+                                    <p style="font-size: 13px; color: var(--text-muted); font-weight: 800; margin: 5px 0 0 0;">
+                                        <i data-lucide="map-pin" style="width: 14px; vertical-align: middle; color: var(--primary-orange);"></i> ${order.location}
+                                    </p>
+                                </div>
+                                <img src="${order.avatar}" style="width: 65px; height: 65px; border-radius: 20px; object-fit: cover; border: 2px solid var(--border-color);">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <button class="btn-premium btn-indigo" style="height: 55px; font-size: 15px; padding: 0 15px;" onclick="updateOrderStatus(${order.id}, 'accepted')">
+                            <i data-lucide="check-circle" style="width: 18px;"></i> قبول الطلب
+                        </button>
+                        <button class="btn-premium btn-outline-premium" style="height: 55px; font-size: 15px; padding: 0 15px;" onclick="updateOrderStatus(${order.id}, 'rejected')">
+                            <i data-lucide="x-circle" style="width: 18px;"></i> رفض
+                        </button>
+                    </div>
+                </div>
+            `).join('') || '<div style="padding: 40px; text-align: center; opacity: 0.5;">لا توجد طلبات جديدة.</div>';
+
+            renderOverviewMessages();
+            if (window.lucide) lucide.createIcons();
+        }
+
+        async function renderOverviewMessages() {
+            const list = document.getElementById('latestMessages');
+            if (!list) return;
+
+            const currentUser = JSON.parse(localStorage.getItem('albane_user') || '{}');
+            const artisanId = String(currentUser.id || '1');
+            const allMessages = window.api ? ((await api.getMessages()).data || []) : [];
+            
+            const threads = {};
+            allMessages.forEach(m => {
+                if (String(m.artisanId || m.artisan_id) === artisanId) {
+                    const clientId = String((m.senderId || m.sender_id) === artisanId ? (m.receiverId || m.receiver_id) : (m.senderId || m.sender_id));
+                    if (!threads[clientId] || new Date(m.timestamp || m.created_at) > new Date(threads[clientId].timestamp)) {
+                        threads[clientId] = {
+                            id: clientId,
+                            name: (m.senderId || m.sender_id) === artisanId ? (m.receiverName || m.receiver_name || 'زبون') : (m.senderName || m.sender_name),
+                            msg: m.content,
+                            timestamp: m.timestamp || m.created_at,
+                            avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(m.senderName || m.sender_name || 'A')}&background=random&color=fff`
+                        };
+                    }
+                }
+            });
+
+            const recent = Object.values(threads).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 3);
+            
+            list.innerHTML = recent.map(chat => `
+                <div class="glass-card-v3" style="padding: 20px; display: flex; gap: 15px; align-items: center; cursor: pointer; transition: 0.3s; border: 1px solid rgba(255,255,255,0.03);" onclick="openAndGoToChat('${chat.id}', true)">
+                    <div style="flex: 1; text-align: right;">
+                        <h5 style="margin: 0; font-weight: 950; color: white; font-size: 15px;">${chat.name}</h5>
+                        <p style="margin: 5px 0 0; font-size: 12px; color: var(--text-muted); font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 180px;">${chat.msg}</p>
+                    </div>
+                    <img src="${chat.avatar}" style="width: 50px; height: 50px; border-radius: 14px; object-fit: cover;">
+                </div>
+            `).join('') || `
+                <div style="grid-column: 1/-1; padding: 40px; text-align: center; opacity: 0.5; font-weight: 800; border: 1px dashed rgba(255,255,255,0.1); border-radius: 20px;">
+                    لا توجد رسائل حديثة.
+                </div>
+            `;
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function openAndGoToChat(id, isReal) {
+            switchDashboardTab('messages');
+            setTimeout(() => {
+                openArtisanChat(id, isReal);
+            }, 100);
+        }
+
+        function updateOrderStatus(id, newStatus) {
+            const order = artisanDashboardData.orders.find(o => o.id === id);
+            if (order) {
+                order.status = newStatus;
+                if (window.DashboardManager) {
+                    DashboardManager.showToast(newStatus === 'accepted' ? 'order_accepted' : 'order_rejected', newStatus === 'accepted' ? 'success' : 'info');
+                }
+                renderOverview();
+                renderFullOrders();
+            }
+        }
+
+        async function renderFullOrders(filter = 'all') {
+            await loadArtisanDashboardData();
+            // Update filter buttons UI
+            const filterContainer = document.querySelector('.orders-header-premium div');
+            if (filterContainer) {
+                const btns = filterContainer.querySelectorAll('button');
+                btns.forEach(btn => {
+                    const btnOnclick = btn.getAttribute('onclick');
+                    if (btnOnclick && btnOnclick.includes(`'${filter}'`)) {
+                        btn.classList.remove('btn-outline-premium');
+                        btn.classList.add('btn-indigo');
+                    } else {
+                        btn.classList.add('btn-outline-premium');
+                        btn.classList.remove('btn-indigo');
+                    }
+                });
+            }
+
+            const list = document.getElementById('fullOrdersList');
+            if (!list) return;
+
+            const filtered = filter === 'all' ? artisanDashboardData.orders : artisanDashboardData.orders.filter(o => o.status === filter);
+
+            list.innerHTML = filtered.map(order => `
+                <div class="order-card-premium" style="border-inline-start: 6px solid ${getStatusColor(order.status)}; padding: 20px;">
+                    <div style="display: flex; flex-direction: column; gap: 20px;">
+                        <!-- Top Part: Client Info -->
+                        <div style="display: flex; gap: 15px; align-items: flex-start; text-align: right;">
+                            <div style="flex: 1;">
+                                <h4 style="font-weight: 950; font-size: 18px; margin: 0 0 10px 0; color: white;">${order.client}</h4>
+                                <div style="display: flex; flex-wrap: wrap; gap: 12px; color: var(--text-muted); font-size: 13px; font-weight: 800;">
+                                    <span style="display: flex; align-items: center; gap: 5px;">
+                                        <i data-lucide="map-pin" style="width: 14px; color: var(--primary-orange);"></i> ${order.location}
+                                    </span>
+                                    <span style="display: flex; align-items: center; gap: 5px;">
+                                        <i data-lucide="calendar" style="width: 14px;"></i> ${order.date}
+                                    </span>
+                                    <span class="status-badge" style="color: ${getStatusColor(order.status)}; background: rgba(255,255,255,0.03); padding: 2px 8px; border-radius: 6px;">
+                                        ${t(order.status)}
+                                    </span>
+                                </div>
+                            </div>
+                            <img src="${order.avatar}" style="width: 60px; height: 60px; border-radius: 15px; object-fit: cover; border: 2px solid var(--border-color);">
+                        </div>
+
+                        <!-- Bottom Part: Actions -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.05);">
+                            <button class="btn-premium btn-outline-premium" style="padding: 0 15px; height: 50px; border-radius: 14px; font-weight: 950; font-size: 14px;" onclick="switchDashboardTab('messages')">
+                                <i data-lucide="message-square" style="width: 16px;"></i> دردشة
+                            </button>
+                            <button class="btn-premium btn-indigo" style="padding: 0 15px; height: 50px; border-radius: 14px; font-weight: 950; font-size: 14px;" onclick="window.location.href='tel:0600000000'">
+                                <i data-lucide="phone" style="width: 16px;"></i> اتصال
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('') || `<div style="text-align:center; padding:100px; opacity:0.5; background: rgba(15,23,42,0.2); border-radius: 30px; border: 1px dashed var(--border-color);">
+                <i data-lucide="inbox" style="width: 40px; height: 40px; margin-bottom: 15px; opacity: 0.3;"></i>
+                <p style="font-weight: 800;">ما عندك حتى طلب فـ هاد القسم.</p>
+            </div>`;
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function getStatusColor(status) {
+            const colors = { new: '#F59E0B', accepted: '#10B981', completed: '#3B82F6', rejected: '#EF4444', pending: '#94A3B8' };
+            return colors[status] || '#E2E8F0';
+        }
+
+        function handleStatusToggle() {
+            const toggle = document.getElementById('artisanStatusToggle');
+            const badge = document.getElementById('statusBadgeLarge');
+            toggle.classList.toggle('on');
+
+            const isAvailable = toggle.classList.contains('on');
+            toggle.setAttribute('aria-checked', String(isAvailable));
+
+            if (isAvailable) {
+                badge.style.background = 'rgba(16, 185, 129, 0.1)';
+                badge.style.color = '#10B981';
+                badge.style.borderColor = 'rgba(16, 185, 129, 0.2)';
+                badge.textContent = t('available_now') || '● خدام (متاح)';
+                if (window.DashboardManager) DashboardManager.showToast('status_available', 'success');
+            } else {
+                badge.style.background = 'rgba(239, 68, 68, 0.1)';
+                badge.style.color = '#EF4444';
+                badge.style.borderColor = 'rgba(239, 68, 68, 0.2)';
+                badge.textContent = '● مشغول حالياً';
+                if (window.DashboardManager) DashboardManager.showToast('status_busy', 'info');
+            }
+
+            const user = JSON.parse(localStorage.getItem('albane_user') || '{}');
+            if (user.id) {
+                localStorage.setItem(`lharfa_artisan_status_${user.id}`, isAvailable ? 'available' : 'busy');
+                try {
+                    const artisans = JSON.parse(localStorage.getItem('lharfa_local_artisans') || '[]');
+                    const index = artisans.findIndex((artisan) =>
+                        String(artisan.user_id || artisan.id) === String(user.id)
+                    );
+                    if (index >= 0) {
+                        artisans[index].status = isAvailable ? 'active' : 'busy';
+                        localStorage.setItem('lharfa_local_artisans', JSON.stringify(artisans));
+                    }
+                } catch (e) {}
+            }
+        }
+
+        function initializeStatusToggle() {
+            const toggle = document.getElementById('artisanStatusToggle');
+            const badge = document.getElementById('statusBadgeLarge');
+            if (!toggle || !badge) return;
+
+            const user = JSON.parse(localStorage.getItem('albane_user') || '{}');
+            const savedStatus = user.id
+                ? localStorage.getItem(`lharfa_artisan_status_${user.id}`)
+                : null;
+            const isAvailable = savedStatus !== 'busy';
+
+            toggle.classList.toggle('on', isAvailable);
+            toggle.setAttribute('aria-checked', String(isAvailable));
+
+            if (isAvailable) {
+                badge.style.background = 'rgba(16, 185, 129, 0.1)';
+                badge.style.color = '#10B981';
+                badge.style.borderColor = 'rgba(16, 185, 129, 0.2)';
+                badge.textContent = t('available_now') || '● خدام (متاح)';
+            } else {
+                badge.style.background = 'rgba(239, 68, 68, 0.1)';
+                badge.style.color = '#EF4444';
+                badge.style.borderColor = 'rgba(239, 68, 68, 0.2)';
+                badge.textContent = '● مشغول حالياً';
+            }
+        }
+
+        async function renderReviews() {
+            const list = document.getElementById('artisanReviewsList');
+            if (!list) return;
+            const currentUser = JSON.parse(localStorage.getItem('albane_user') || '{}');
+            const res = window.api ? await api.getReviews(currentUser.id) : { success: true, data: [] };
+            const reviews = res.success ? (res.data || []) : [];
+
+            list.innerHTML = reviews.map((rev) => {
+                const clientName = rev.client || rev.client_name || '????';
+                const avatar = rev.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(clientName) + '&background=FF4500&color=fff';
+                const stars = Array(Number(rev.rating || 5)).fill('<i data-lucide="star" style="width: 12px; fill: #F59E0B;"></i>').join('');
+                return '<div class="glass-card-v3" style="padding: 30px; position: relative; overflow: hidden; transition: transform 0.4s ease;">'
+                    + '<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; position: relative; z-index: 2;">'
+                    + '<div style="display: flex; gap: 15px; align-items: center;">'
+                    + '<img src="' + avatar + '" style="width: 55px; height: 55px; border-radius: 18px; object-fit: cover; border: 2px solid rgba(255,255,255,0.05);">'
+                    + '<div><h5 style="font-weight: 950; margin: 0; font-size: 17px; color: white;">' + clientName + '</h5>'
+                    + '<p style="font-size: 12px; color: var(--text-muted); font-weight: 800; margin-top: 2px;">' + (rev.created_at ? rev.created_at.slice(0, 10) : '') + '</p></div>'
+                    + '</div><div style="display: flex; gap: 2px; color: #F59E0B; background: rgba(245, 158, 11, 0.05); padding: 5px 10px; border-radius: 10px;">' + stars + '</div></div>'
+                    + '<p style="font-size: 16px; line-height: 1.7; color: white; opacity: 0.95; font-weight: 800; margin-bottom: 25px; position: relative; z-index: 2; font-style: italic;">"' + (rev.comment || '') + '"</p></div>';
+            }).join('') || '<div style="padding: 50px; text-align: center; opacity: 0.5; font-weight: 800;">ما كاين حتى تقييم دابا.</div>';
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function handleReviewReply(id) {
+            const reply = prompt("اكتب ردك للزبون:");
+            if (reply) {
+                if (window.DashboardManager) DashboardManager.showToast('تم إرسال ردك بنجاح', 'success');
+                else alert('تم إرسال ردك بنجاح');
+            }
+        }
+
+        let activeChatSession = null;
+
+        /* ============================================================
+           MESSENGER SYSTEM REBORN (ARTISAN)
+           ============================================================ */
+        let activeChatId = null;
+        let isRealChat = false;
+
+        async function renderArtisanChats() {
+            const list = document.getElementById('artisanChatList');
+            if (!list) return;
+
+            const currentUser = JSON.parse(localStorage.getItem('albane_user') || '{}');
+            const artisanId = String(currentUser.id || '1');
+            
+            // 1. Get real messages and group by sender (client)
+            const allMessages = window.api ? ((await api.getMessages()).data || []) : [];
+            const artisanMessages = allMessages.filter(m => String(m.artisanId || m.artisan_id) === artisanId);
+            
+            const realThreads = {};
+            artisanMessages.forEach(m => {
+                const clientId = String((m.senderId || m.sender_id) === artisanId ? (m.receiverId || m.receiver_id) : (m.senderId || m.sender_id));
+                if (!realThreads[clientId] || new Date(m.timestamp || m.created_at) > new Date(realThreads[clientId].timestamp)) {
+                    realThreads[clientId] = {
+                        id: clientId,
+                        name: (m.senderId || m.sender_id) === artisanId ? (m.receiverName || m.receiver_name || 'زبون') : (m.senderName || m.sender_name),
+                        msg: m.content,
+                        time: new Date(m.timestamp || m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                        timestamp: m.timestamp || m.created_at,
+                        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(m.senderName || m.sender_name)}&background=random&color=fff`,
+                        online: true,
+                        isReal: true
+                    };
+                }
+            });
+
+            const realChats = Object.values(realThreads);
+            const combinedChats = [...realChats, ...artisanDashboardData.chats];
+
+            list.innerHTML = combinedChats.map((chat, idx) => `
+                <div class="chat-list-item ${activeChatId === String(chat.id) ? 'active' : ''}" 
+                     onclick="openArtisanChat('${chat.id}', ${chat.isReal || false})" 
+                     data-id="${chat.id}">
+                    <div style="flex: 1; text-align: right;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                            <span style="font-size: 10px; opacity: 0.6; font-weight: 800;">${chat.time}</span>
+                            <h5 style="font-weight: 950; font-size: 15px; margin: 0; color: white;">${chat.name}</h5>
+                        </div>
+                        <p style="font-size: 12px; opacity: 0.7; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 190px; font-weight: 700;">${chat.msg}</p>
+                    </div>
+                    <div style="position: relative; flex-shrink: 0;">
+                        <img src="${chat.avatar}" style="width: 48px; height: 48px; border-radius: 15px; object-fit: cover;">
+                        ${chat.online ? '<span style="position: absolute; bottom: 2px; right: 2px; width: 12px; height: 12px; background: #10B981; border: 2.5px solid #0F172A; border-radius: 50%;"></span>' : ''}
+                    </div>
+                </div>
+            `).join('') || '<div style="padding: 50px; text-align: center; opacity: 0.5; font-weight: 800;">لا توجد محادثات نشطة.</div>';
+
+            // REMOVED: Automatic openArtisanChat call to allow user to see the list first
+        }
+
+        async function openArtisanChat(id, isReal = false) {
+            activeChatId = String(id);
+            isRealChat = isReal;
+
+            const currentUser = JSON.parse(localStorage.getItem('albane_user') || '{}');
+            const artisanId = String(currentUser.id || '1');
+            const body = document.getElementById('chatBody');
+            
+            // UI Updates
+            document.querySelectorAll('.chat-list-item').forEach(item => {
+                item.classList.toggle('active', item.getAttribute('data-id') === activeChatId);
+            });
+
+            let chatInfo;
+            if (isReal) {
+                const allMessages = window.api ? ((await api.getMessages()).data || []) : [];
+                const thread = allMessages.filter(m => 
+                    (String(m.artisanId || m.artisan_id) === artisanId && String(m.senderId || m.sender_id) === activeChatId) ||
+                    (String(m.senderId || m.sender_id) === artisanId && String(m.receiverId || m.receiver_id) === activeChatId)
+                ).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+                if (thread.length > 0) {
+                    const firstMsg = thread.find(m => String(m.senderId || m.sender_id) === activeChatId);
+                    chatInfo = {
+                        name: firstMsg ? firstMsg.senderName : 'زبون',
+                        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(firstMsg ? firstMsg.senderName : 'A')}&background=random&color=fff`
+                    };
+                    body.innerHTML = thread.map(m => `
+                        <div class="chat-bubble ${String(m.senderId || m.sender_id) === artisanId ? 'bubble-out' : 'bubble-in'}">
+                            ${m.content}
+                            <span class="chat-time">${new Date(m.timestamp || m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                    `).join('');
+                }
+            } else {
+                chatInfo = artisanDashboardData.chats.find(c => String(c.id) === activeChatId);
+                if (chatInfo) {
+                    body.innerHTML = `
+                        <div class="chat-bubble bubble-in">
+                            مرحباً يا معلم، واش ممكن تجي تشوف واحد المشكل فالمكينة ديال الصابون اليوم؟
+                            <span class="chat-time">10:15 AM</span>
+                        </div>
+                        <div class="chat-bubble bubble-out">
+                            أهلاً جلال، نعم أنا متوفر اليوم. ربع ساعة وأكون عندك في حي المحايطة.
+                            <span class="chat-time">10:17 AM</span>
+                        </div>
+                    `;
+                }
+            }
+
+            if (chatInfo) {
+                document.getElementById('chatName').textContent = chatInfo.name;
+                document.getElementById('chatAvatar').src = chatInfo.avatar;
+            }
+
+            if (window.innerWidth <= 1024) {
+                document.querySelector('.premium-messenger').classList.add('show-chat');
+            }
+            body.scrollTop = body.scrollHeight;
+            if (window.lucide) lucide.createIcons();
+        }
+
+        async function sendChatMessage() {
+            const inp = document.getElementById('chatMsgInput');
+            const val = inp.value.trim();
+            if (!val || !activeChatId) return;
+
+            const currentUser = JSON.parse(localStorage.getItem('albane_user') || '{}');
+            const artisanId = String(currentUser.id || '1');
+            const body = document.getElementById('chatBody');
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            // UI Update
+            body.innerHTML += `
+                <div class="chat-bubble bubble-out">
+                    ${val}
+                    <span class="chat-time">${time}</span>
+                </div>
+            `;
+
+            // Persistent Storage
+            if (isRealChat) {
+                const newMessage = {
+                    id: Date.now(),
+                    artisanId: artisanId,
+                    senderId: artisanId,
+                    senderName: currentUser.name || 'الحرفي',
+                    receiverId: activeChatId,
+                    content: val,
+                    timestamp: new Date().toISOString(),
+                    status: 'unread',
+                    type: 'artisan_reply'
+                };
+                await api.addMessage(newMessage);
+            }
+
+            inp.value = '';
+            body.scrollTop = body.scrollHeight;
+        }
+
+        function closeMobileChat() {
+            document.querySelector('.premium-messenger').classList.remove('show-chat');
+        }
+
+        function handleQuickCall() {
+            if (window.DashboardManager) {
+                DashboardManager.showToast('جاري الاتصال... سيتم تحويلك للمكالمة الصوتية.', 'info');
+            } else {
+                alert('جاري الاتصال...');
+            }
+        }
+
+        function loadArtisanProfile() {
+            const user = JSON.parse(localStorage.getItem('albane_user') || '{}');
+            document.getElementById('artisanName').textContent = user.name || 'الحرفي';
+            document.getElementById('artisanCityDisplay').textContent = t(user.city) || user.city || 'تارودانت';
+            updateArtisanStats();
+            document.getElementById('pNameView').textContent = user.name || 'الحرفي المهني';
+            document.getElementById('pNameInput').value = user.name || '';
+            document.getElementById('pSpecialty').value = user.specialty || ''; 
+            document.getElementById('pCity').value = user.city || ''; 
+            document.getElementById('pExpInput').value = user.experience || 0;
+            document.getElementById('pBioInput').value = user.bio || '';
+
+            if (user.avatar) document.getElementById('artisanAvatarView').src = user.avatar;
+            if (user.gallery) renderGalleryPreview(user.gallery);
+        }
+
+        let tempGallery = [];
+        function handleGalleryUpload(e) {
+            const files = Array.from(e.target.files);
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    tempGallery.push(ev.target.result);
+                    renderGalleryPreview(tempGallery);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function renderGalleryPreview(imgs) {
+            const container = document.getElementById('pGalleryPreview');
+            container.innerHTML = imgs.map((img, idx) => `
+                <div class="gallery-preview-item">
+                    <img src="${img}">
+                    <button class="remove-img" onclick="removeGalleryImg(${idx})">&times;</button>
+                </div>
+            `).join('');
+            tempGallery = [...imgs];
+        }
+
+        function removeGalleryImg(idx) {
+            tempGallery.splice(idx, 1);
+            renderGalleryPreview(tempGallery);
+        }
+
+        async function saveArtisanProfile(btn) {
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i data-lucide="loader" class="spin"></i> ' + (t('saving') || '???? ?????...');
+            if (window.lucide) lucide.createIcons();
+
+            const user = JSON.parse(localStorage.getItem('albane_user') || '{}');
+            user.name = document.getElementById('pNameInput').value;
+            user.specialty = document.getElementById('pSpecialty').value;
+            user.city = document.getElementById('pCity').value;
+            user.experience = document.getElementById('pExpInput').value;
+            user.bio = document.getElementById('pBioInput').value;
+            user.gallery = tempGallery;
+            user.role = 'artisan';
+
+            const res = await api.updateProfile(user);
+            if (res.success) {
+                if (window.DashboardManager) DashboardManager.showToast('changes_saved_success', 'success');
+                loadArtisanProfile();
+            } else if (window.DashboardManager) {
+                DashboardManager.showToast(res.message || '???? ??? ?????????', 'error');
+            }
+            btn.innerHTML = originalText;
+            if (window.lucide) lucide.createIcons();
+        }
+
+        async function updatePassword() {
+            const p1 = document.getElementById('newPassInput').value;
+            const p2 = document.getElementById('confirmPassInput').value;
+            if (!p1 || p1 !== p2) {
+                if (window.DashboardManager) DashboardManager.showToast('passwords_not_match', 'error');
+                return;
+            }
+            if (p1.length < 6) {
+                if (window.DashboardManager) DashboardManager.showToast('password_too_short', 'error');
+                return;
+            }
+            const result = await api.updatePassword(p1);
+            if (!result.success) {
+                if (window.DashboardManager) DashboardManager.showToast(result.message || 'حدث خطأ', 'error');
+                return;
+            }
+            if (window.DashboardManager) DashboardManager.showToast('password_updated_success', 'success');
+            document.getElementById('newPassInput').value = '';
+            document.getElementById('confirmPassInput').value = '';
+        }
+
+        function uploadArtisanAvatar(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                document.getElementById('artisanAvatarView').src = ev.target.result;
+                const user = JSON.parse(localStorage.getItem('albane_user') || '{}');
+                user.avatar = ev.target.result;
+                localStorage.setItem('albane_user', JSON.stringify(user));
+                if (window.DashboardManager) DashboardManager.showToast('avatar_updated', 'success');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function logout() {
+            if (window.showCustomToast) {
+                showCustomToast('جاري تسجيل الخروج... في أمان الله', 'info', 'log-out');
+            }
+            setTimeout(() => {
+                if (window.DashboardManager) DashboardManager.logout();
+                else {
+                    localStorage.removeItem('albane_token');
+                    localStorage.removeItem('albane_user');
+                    window.location.href = 'index.html';
+                }
+            }, 800);
+        }
+        function handleQuickCall() { window.location.href = 'tel:0600000000'; }
+
+        /* ===== SHARE PROFILE ===== */
+        function shareMyProfile() {
+            const user = JSON.parse(localStorage.getItem('albane_user') || '{}');
+            const username = (user.name || 'artisan').replace(/\s+/g, '-').toLowerCase();
+            const profileUrl = `lharfa.ma/${username}`;
+
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(profileUrl).then(() => {
+                    showCustomToast(`تم نسخ الرابط: ${profileUrl}`, 'success', 'link');
+                }).catch(() => fallbackCopy(profileUrl));
+            } else {
+                fallbackCopy(profileUrl);
+            }
+        }
+
+        function fallbackCopy(text) {
+            const el = document.createElement('textarea');
+            el.value = text;
+            el.style.cssText = 'position:fixed;opacity:0;top:0;left:0;';
+            document.body.appendChild(el);
+            el.focus(); el.select();
+            try {
+                document.execCommand('copy');
+                showCustomToast(`تم نسخ الرابط: ${text}`, 'success', 'link');
+            } catch (e) {
+                showCustomToast('تعذر نسخ الرابط، حاول يدوياً', 'error', 'alert-circle');
+            }
+            document.body.removeChild(el);
+        }
+
+        /* ===== TOAST SYSTEM ===== */
+        function showCustomToast(message, type = 'success', icon = 'check-circle') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast-item toast-${type}`;
+            toast.innerHTML = `
+                <div class="toast-icon"><i data-lucide="${icon}" style="width:18px;height:18px;"></i></div>
+                <span>${message}</span>
+            `;
+            container.appendChild(toast);
+            if (window.lucide) lucide.createIcons();
+            setTimeout(() => {
+                toast.classList.add('toast-out');
+                setTimeout(() => toast.remove(), 400);
+            }, 3500);
+        }
+
+        /* ===== QUICK UPLOAD MODAL ===== */
+        let modalImages = [];
+
+        function openQuickUploadModal() {
+            document.getElementById('quickUploadModal').classList.add('open');
+            document.body.style.overflow = 'hidden';
+            modalImages = [];
+            document.getElementById('modalPreviewGrid').innerHTML = '';
+            document.getElementById('uploadWorkTitle').value = '';
+            document.getElementById('uploadWorkDesc').value = '';
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function closeQuickUploadModal() {
+            document.getElementById('quickUploadModal').classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        function handleModalBackdropClick(e) {
+            if (e.target === document.getElementById('quickUploadModal')) closeQuickUploadModal();
+        }
+
+        function handleModalImgUpload(e) {
+            const files = Array.from(e.target.files);
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    modalImages.push(ev.target.result);
+                    renderModalPreview();
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function renderModalPreview() {
+            const grid = document.getElementById('modalPreviewGrid');
+            grid.innerHTML = modalImages.map((img, idx) => `
+                <div class="modal-preview-item">
+                    <img src="${img}" alt="preview">
+                    <button class="remove-img" onclick="removeModalImg(${idx})">&times;</button>
+                </div>
+            `).join('');
+        }
+
+        function removeModalImg(idx) {
+            modalImages.splice(idx, 1);
+            renderModalPreview();
+        }
+
+        function submitQuickUpload() {
+            const title = document.getElementById('uploadWorkTitle').value.trim();
+            if (!title) {
+                showCustomToast('يرجى إدخال عنوان للعمل', 'error', 'alert-circle');
+                return;
+            }
+            const btn = document.getElementById('modalSubmitBtn');
+            btn.innerHTML = '<i data-lucide="loader" class="spin"></i> جاري النشر...';
+            btn.disabled = true;
+            if (window.lucide) lucide.createIcons();
+
+            // Add images to gallery and save
+            const user = JSON.parse(localStorage.getItem('albane_user') || '{}');
+            const existingGallery = user.gallery || [];
+            user.gallery = [...existingGallery, ...modalImages];
+            localStorage.setItem('albane_user', JSON.stringify(user));
+            tempGallery = user.gallery;
+
+            setTimeout(() => {
+                btn.innerHTML = '<i data-lucide="upload"></i> نشر العمل';
+                btn.disabled = false;
+                closeQuickUploadModal();
+                renderGalleryPreview(tempGallery);
+                showCustomToast('تم نشر عملك بنجاح!', 'success', 'check-circle');
+                if (window.lucide) lucide.createIcons();
+            }, 1200);
+        }
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeQuickUploadModal();
+        });
+
+        // Initial Load
+        
+        function toggleArtisanLangDropdown(e) {
+            if (window.I18nManager && typeof window.I18nManager.toggleLanguageDropdown === 'function') {
+                window.I18nManager.toggleLanguageDropdown(e);
+            } else {
+                e.stopPropagation();
+                const switcher = e.currentTarget ? e.currentTarget.closest('.dashboard-lang-switcher') : null;
+                const dd = document.getElementById('artisanLangDropdown');
+                if (dd) dd.classList.toggle('show');
+                if (switcher) switcher.classList.toggle('open');
+            }
+        }
+
+        function switchPlatformLang(lang) {
+            if (window.I18nManager && typeof window.I18nManager.setLanguage === 'function') {
+                window.I18nManager.setLanguage(lang);
+            } else {
+                localStorage.setItem('albane_lang', lang);
+                window.location.reload();
+            }
+        }
+
+        window.addEventListener('click', (e) => {
+            const dd = document.getElementById('artisanLangDropdown');
+            if (dd && !e.target.closest('.dashboard-lang-switcher')) {
+                dd.classList.remove('show');
+                const switcher = dd.closest('.dashboard-lang-switcher');
+                if (switcher) switcher.classList.remove('open');
+            }
+        });
+
+        function updateArtisanLangBadge() {
+            const current = (localStorage.getItem('albane_lang') || 'ar').toUpperCase();
+            const badge = document.getElementById('currentArtisanLangLabel');
+            if (badge) badge.textContent = current;
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const token = localStorage.getItem('albane_token');
+            const user = JSON.parse(localStorage.getItem('albane_user') || '{}');
+            if (!token || !user.email || user.role !== 'artisan') {
+                window.location.replace(user.role === 'client'
+                    ? 'client-dashboard.html'
+                    : user.role === 'admin'
+                        ? 'admin-dashboard.html'
+                        : 'login.html');
+                return;
+            }
+            await loadArtisanDashboardData();
+            renderOverview();
+            renderFullOrders();
+            renderArtisanChats();
+            renderReviews();
+            loadArtisanProfile();
+            initializeStatusToggle();
+            if (user.role === 'artisan') {
+                const eliteIcon = document.getElementById('sidebarEliteIcon');
+                if (eliteIcon) eliteIcon.style.display = 'block';
+            }
+            if (window.lucide) lucide.createIcons();
+            if (window.I18nManager) window.I18nManager.updateDOM();
+        });
+    </script>
+    <script src="platform-actions.js"></script>
+</body>
+
+</html>

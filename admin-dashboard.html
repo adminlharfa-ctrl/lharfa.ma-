@@ -1,0 +1,3499 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="admin_dashboard_title">Elite Command Center | lharfa.ma</title>
+    <link rel="icon" type="image/jpeg" href="logo1.png">
+    
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@0.344.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- API Integration -->
+    <script src="translations.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js?v=20261125"></script>
+
+    <script src="api.js?v=20261125"></script>
+    <script src="i18n-manager.js" defer></script>
+    <script src="dashboard-common.js" defer></script>
+
+    <style>
+        :root {
+            --bg-dark: #020617;
+            --sidebar-bg: rgba(11, 15, 26, 0.8);
+            --card-bg: rgba(15, 23, 42, 0.6);
+            --accent: #FF3F00;
+            --accent-glow: rgba(255, 63, 0, 0.4);
+            --text-primary: #F8FAFC;
+            --text-secondary: #94A3B8;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --glass-blur: blur(20px);
+            --success: #10B981;
+            --warning: #F59E0B;
+            --danger: #EF4444;
+            --sidebar-width: 280px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent) transparent;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            background-image: 
+                radial-gradient(circle at 0% 0%, rgba(255, 63, 0, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 100% 100%, rgba(59, 130, 246, 0.05) 0%, transparent 50%);
+            color: var(--text-primary);
+            font-family: 'Tajawal', 'Outfit', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+        }
+
+        /* --- Sidebar (RTL: Right side) --- */
+        .sidebar {
+            width: var(--sidebar-width);
+            height: 100%;
+            background: var(--sidebar-bg);
+            backdrop-filter: var(--glass-blur);
+            border-left: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 2rem 1.5rem;
+            z-index: 100;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 3rem;
+            padding: 0 10px;
+        }
+
+        .sidebar-logo img {
+            width: 40px;
+            filter: drop-shadow(0 0 8px var(--accent-glow));
+        }
+
+        .sidebar-logo h2 {
+            font-size: 1.5rem;
+            font-weight: 900;
+            
+        }
+
+        .sidebar-logo span {
+            color: var(--accent);
+        }
+
+        .nav-menu {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 18px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: 0.3s;
+            cursor: pointer;
+            border: 1px solid transparent;
+        }
+
+        .nav-link i {
+            width: 20px;
+            height: 20px;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-link.active {
+            background: rgba(255, 63, 0, 0.1);
+            border-color: rgba(255, 63, 0, 0.2);
+            box-shadow: 0 0 20px rgba(255, 63, 0, 0.1);
+        }
+
+        .nav-link.active i {
+            color: var(--accent);
+            filter: drop-shadow(0 0 5px var(--accent));
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        /* --- Main Content Area --- */
+        .main-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- Top Navigation --- */
+        
+        /* --- ADMIN LANG SWITCHER --- */
+        .dashboard-lang-switcher {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dashboard-lang-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 8px 14px;
+            border-radius: 12px;
+            background: rgba(255, 63, 0, 0.1);
+            border: 1px solid rgba(255, 63, 0, 0.25);
+            color: var(--accent);
+            font-weight: 850;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .dashboard-lang-btn:hover {
+            background: var(--accent);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 63, 0, 0.35);
+        }
+
+        .dashboard-lang-btn i {
+            width: 14px;
+            height: 14px;
+        }
+
+        .dashboard-lang-dropdown {
+            position: absolute;
+            top: calc(100% + 8px);
+            inset-inline-end: 0;
+            background: rgba(15, 23, 42, 0.96);
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 6px;
+            min-width: 175px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.45);
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+            z-index: 1000;
+        }
+
+        .dashboard-lang-dropdown.show {
+            display: flex;
+        }
+
+        .dashboard-lang-dropdown a {
+            padding: 8px 12px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 12.5px;
+            font-weight: 800;
+            border-radius: 10px;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .dashboard-lang-dropdown a:hover,
+        .dashboard-lang-dropdown a.active {
+            color: white;
+            background: rgba(255, 63, 0, 0.15);
+        }
+
+        .dashboard-lang-dropdown a.active .lang-check {
+            opacity: 1 !important;
+            stroke: #FF5500 !important;
+        }
+
+        .dashboard-lang-switcher.open .dashboard-lang-btn i:last-child {
+            transform: rotate(180deg);
+        }
+
+        .top-nav {
+            height: 80px;
+            padding: 0 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+            background: rgba(2, 6, 23, 0.5);
+            backdrop-filter: blur(10px);
+            z-index: 90;
+        }
+
+        .search-container {
+            position: relative;
+            width: 400px;
+        }
+
+        .search-container i {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            pointer-events: none;
+        }
+
+        .search-input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 12px 45px 12px 15px;
+            color: var(--text-primary);
+            font-family: inherit;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        .search-input:focus {
+            border-color: var(--accent);
+            background: rgba(255, 255, 255, 0.06);
+            box-shadow: 0 0 15px rgba(255, 63, 0, 0.1);
+        }
+
+        .admin-profile {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .notification-btn {
+            position: relative;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 8px;
+            transition: 0.3s;
+        }
+
+        .notification-btn:hover {
+            color: var(--accent);
+        }
+
+        .notification-dot {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 8px;
+            height: 8px;
+            background: var(--accent);
+            border-radius: 50%;
+            border: 2px solid var(--bg-dark);
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--accent), #ff8c00);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            color: white;
+            cursor: pointer;
+            border: 2px solid var(--border-color);
+        }
+
+        /* --- Scrollable Content --- */
+        .content-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 2.5rem;
+            scroll-behavior: smooth;
+        }
+
+        .page-title {
+            margin-bottom: 2.5rem;
+        }
+
+        .page-title h1 {
+            font-size: 2.5rem;
+            font-weight: 900;
+            
+            background: linear-gradient(to left, #fff, var(--text-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .page-title p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            margin-top: 0.5rem;
+        }
+
+        /* --- Stats Grid --- */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1.2rem;
+            margin-bottom: 2.5rem;
+        }
+
+        @media (max-width: 1400px) {
+            .stats-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+        @media (max-width: 900px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--border-color);
+            padding: 1.5rem;
+            border-radius: 24px;
+            transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--accent);
+            opacity: 0;
+            transition: 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255, 63, 0, 0.3);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .stat-card:hover::before {
+            opacity: 1;
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .stat-icon {
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--accent);
+        }
+
+        .stat-trend {
+            font-size: 0.85rem;
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: 8px;
+        }
+
+        .trend-up { color: var(--success); background: rgba(16, 185, 129, 0.1); }
+        .trend-down { color: var(--danger); background: rgba(239, 68, 68, 0.1); }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        /* --- Main Layout Grid --- */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        @media (max-width: 1200px) {
+            .dashboard-grid { grid-template-columns: 1fr; }
+        }
+
+        .panel {
+            background: var(--card-bg);
+            backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 1.5rem;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .filter-select {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 8px 12px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .panel-title {
+            font-size: 1.25rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .panel-title i { color: var(--accent); }
+
+        /* --- Tables --- */
+        .table-container {
+            overflow-x: auto;
+        }
+
+        .elite-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: right;
+        }
+
+        .elite-table th {
+            padding: 1rem;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .elite-table td {
+            padding: 1.25rem 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            font-weight: 600;
+        }
+
+        .elite-table tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .user-cell {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-img {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            object-fit: cover;
+        }
+
+        .badge {
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            display: inline-block;
+        }
+
+        .badge-active { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+        .badge-pending { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
+        .badge-banned { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
+
+        .action-btn {
+            background: none;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-right: 5px;
+        }
+
+        .action-btn:hover {
+            color: var(--text-primary);
+            border-color: var(--accent);
+            background: rgba(255, 63, 0, 0.1);
+        }
+
+        .action-btn.approve:hover { color: var(--success); border-color: var(--success); background: rgba(16, 185, 129, 0.1); }
+        .action-btn.reject:hover { color: var(--danger); border-color: var(--danger); background: rgba(239, 68, 68, 0.1); }
+
+        /* --- Activity Feed --- */
+        .activity-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .activity-item {
+            display: flex;
+            gap: 15px;
+            padding: 1rem;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.02);
+            transition: 0.3s;
+        }
+
+        .activity-item:hover {
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .activity-details p {
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+
+        .activity-details span {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        /* --- SPA View Control --- */
+        .view-panel {
+            display: none;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .view-panel.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- Modal --- */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal {
+            background: var(--bg-dark);
+            border: 1px solid var(--border-color);
+            width: 90%;
+            max-width: 500px;
+            border-radius: 24px;
+            padding: 2.5rem;
+            text-align: center;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-icon {
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 63, 0, 0.1);
+            color: var(--accent);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+        }
+
+        .modal h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .modal p {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: 0.3s;
+            font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary { background: var(--accent); color: white; border: none; }
+        .btn-primary:hover { transform: scale(1.02); box-shadow: 0 0 20px var(--accent-glow); }
+        .btn-secondary { background: rgba(255, 255, 255, 0.05); color: var(--text-primary); border: 1px solid var(--border-color); }
+        .btn-secondary:hover { background: rgba(255, 255, 255, 0.1); }
+
+        .modal label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .file-upload-zone {
+            border: 2px dashed var(--border-color);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            transition: 0.3s;
+            background: rgba(255, 255, 255, 0.02);
+            position: relative;
+        }
+
+        .file-upload-zone.dragover {
+            border-color: var(--accent);
+            background: rgba(255, 63, 0, 0.05);
+        }
+
+        .modal-actions .btn {
+            flex: 1;
+        }
+
+        /* Custom Select Styling */
+        select.search-input, select.filter-select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%23FF3F00' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: left 12px center;
+            padding-left: 35px !important;
+            cursor: pointer;
+            color-scheme: dark;
+        }
+
+        select.search-input option, select.filter-select option {
+            background-color: #0B0F1A;
+            color: white;
+            padding: 10px;
+        }
+
+        /* --- RTL Adjustments --- */
+        [dir="rtl"] .sidebar { border-left: 1px solid var(--border-color); border-right: none; }
+        [dir="rtl"] .search-input { padding: 12px 45px 12px 15px; }
+        [dir="rtl"] .search-container i { right: 15px; left: auto; }
+
+        /* --- Responsive --- */
+        @media (max-width: 992px) {
+            .sidebar {
+                position: fixed;
+                right: -280px;
+            }
+            .sidebar.open {
+                right: 0;
+            }
+            .top-nav { padding: 0 1.5rem; }
+            .content-area { padding: 1.5rem; }
+            .search-container { width: 250px; }
+        }
+    
+
+        /* --- Admin Mobile Shell Polish --- */
+        .admin-menu-btn,
+        .admin-mobile-backdrop {
+            display: none;
+        }
+
+        @media (max-width: 992px) {
+            body {
+                display: block;
+                overflow: hidden;
+            }
+
+            .admin-menu-btn {
+                width: 44px;
+                height: 44px;
+                border: 1px solid var(--border-color);
+                background: rgba(255, 255, 255, 0.06);
+                color: var(--text-primary);
+                border-radius: 14px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                flex-shrink: 0;
+            }
+
+            .admin-mobile-backdrop {
+                position: fixed;
+                inset: 0;
+                background: rgba(2, 6, 23, 0.72);
+                backdrop-filter: blur(4px);
+                z-index: 98;
+            }
+
+            body.sidebar-open .admin-mobile-backdrop {
+                display: block;
+            }
+
+            .sidebar {
+                top: 0;
+                right: calc(-1 * var(--sidebar-width));
+                height: 100dvh;
+                box-shadow: -30px 0 80px rgba(0, 0, 0, 0.4);
+            }
+
+            .sidebar.open {
+                right: 0;
+            }
+
+            .main-wrapper {
+                width: 100%;
+                height: 100dvh;
+            }
+
+            .top-nav {
+                height: auto;
+                min-height: 68px;
+                padding: 12px 14px;
+                gap: 10px;
+                position: sticky;
+                top: 0;
+            }
+
+            .search-container {
+                flex: 1;
+                min-width: 0;
+                width: auto;
+            }
+
+            .admin-profile {
+                gap: 8px;
+            }
+
+            .admin-profile > div:last-child {
+                display: none;
+            }
+
+            .content-area {
+                padding: 18px 14px 96px;
+            }
+
+            .page-title {
+                margin-bottom: 18px;
+            }
+
+            .page-title h1 {
+                font-size: 1.7rem;
+                line-height: 1.2;
+            }
+
+            .page-title p {
+                font-size: 0.92rem;
+                line-height: 1.6;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+                margin-bottom: 18px;
+            }
+
+            .stat-card,
+            .panel {
+                border-radius: 18px;
+                padding: 14px;
+            }
+
+            .stat-value {
+                font-size: 1.25rem;
+            }
+
+            .stat-label {
+                font-size: 0.78rem;
+                line-height: 1.4;
+            }
+
+            .stat-icon {
+                width: 38px;
+                height: 38px;
+            }
+
+            .dashboard-grid {
+                gap: 14px;
+                margin-bottom: 18px;
+            }
+
+            .panel-header {
+                align-items: stretch;
+                margin-bottom: 14px;
+            }
+
+            .panel-title {
+                font-size: 1rem;
+                line-height: 1.4;
+            }
+
+            .filter-group {
+                width: 100%;
+                display: grid;
+                grid-template-columns: 1fr;
+            }
+
+            .filter-select,
+            .search-input {
+                min-height: 44px;
+                font-size: 0.86rem;
+            }
+
+            .table-container {
+                margin-inline: -14px;
+                padding-inline: 14px;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .elite-table {
+                min-width: 720px;
+            }
+
+            .elite-table th,
+            .elite-table td {
+                padding: 12px 10px;
+                font-size: 0.82rem;
+                white-space: nowrap;
+            }
+
+            .activity-item {
+                padding: 12px;
+            }
+
+            .modal {
+                width: calc(100% - 24px);
+                max-height: calc(100dvh - 28px);
+                overflow-y: auto;
+                padding: 20px;
+                border-radius: 20px;
+            }
+
+            #addProductForm {
+                grid-template-columns: 1fr !important;
+            }
+
+            #addProductForm > div,
+            #addProductForm .modal-actions {
+                grid-column: auto !important;
+            }
+
+            .modal-actions {
+                flex-direction: column-reverse;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .notification-btn {
+                display: none;
+            }
+        }
+
+    
+
+        /* --- Admin Settings Polish --- */
+        .settings-shell {
+            display: grid;
+            gap: 1.25rem;
+        }
+
+        .settings-hero {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1.5rem;
+            padding: 1.3rem;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 26px;
+            background:
+                linear-gradient(135deg, rgba(255, 63, 0, 0.13), rgba(255, 63, 0, 0.02) 48%),
+                rgba(15, 23, 42, 0.48);
+            box-shadow: 0 22px 60px rgba(0, 0, 0, 0.16);
+        }
+
+        .settings-hero h2 {
+            font-size: 1.15rem;
+            font-weight: 900;
+            margin-bottom: 0.35rem;
+        }
+
+        .settings-hero p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .settings-status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            border-radius: 999px;
+            border: 1px solid rgba(16, 185, 129, 0.22);
+            background: rgba(16, 185, 129, 0.1);
+            color: #D1FAE5;
+            font-weight: 900;
+            white-space: nowrap;
+        }
+
+        .settings-status-pill::before {
+            content: "";
+            width: 9px;
+            height: 9px;
+            border-radius: 999px;
+            background: var(--success);
+            box-shadow: 0 0 16px rgba(16, 185, 129, 0.9);
+        }
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 1.25rem;
+            align-items: start;
+        }
+
+        .settings-card {
+            min-height: 100%;
+            padding: 1.55rem;
+            border-radius: 26px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.015)),
+                var(--card-bg);
+            box-shadow: 0 18px 45px rgba(0, 0, 0, 0.12);
+        }
+
+        .settings-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 1.3rem;
+        }
+
+        .settings-card-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.12rem;
+            font-weight: 950;
+        }
+
+        .settings-card-title i {
+            color: var(--accent);
+        }
+
+        .settings-card-subtitle {
+            color: var(--text-secondary);
+            font-size: 0.78rem;
+            font-weight: 700;
+            margin-top: 0.25rem;
+        }
+
+        .settings-form {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .settings-field label {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            color: rgba(248, 250, 252, 0.92);
+            font-size: 0.86rem;
+            font-weight: 850;
+            margin-bottom: 0.45rem;
+        }
+
+        .settings-field .hint {
+            color: var(--text-secondary);
+            font-size: 0.72rem;
+            font-weight: 700;
+        }
+
+        .settings-input-wrap {
+            position: relative;
+        }
+
+        .settings-input,
+        .settings-select {
+            width: 100%;
+            min-height: 48px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.045);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-weight: 800;
+            outline: none;
+            padding: 0 14px;
+            transition: 0.25s;
+        }
+
+        .settings-select {
+            appearance: none;
+            padding-left: 38px;
+            color-scheme: dark;
+        }
+
+        .settings-input:focus,
+        .settings-select:focus {
+            border-color: rgba(255, 63, 0, 0.55);
+            background: rgba(255, 255, 255, 0.07);
+            box-shadow: 0 0 0 4px rgba(255, 63, 0, 0.08);
+        }
+
+        .settings-suffix {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            font-weight: 900;
+            pointer-events: none;
+        }
+
+        .settings-logo-box,
+        .settings-toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 14px;
+            border-radius: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.035);
+        }
+
+        .settings-logo-box img {
+            width: 58px;
+            height: 58px;
+            object-fit: contain;
+            border-radius: 16px;
+            padding: 7px;
+            background: #05070A;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .settings-toggle-text strong {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 950;
+            margin-bottom: 3px;
+        }
+
+        .settings-toggle-text span {
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .settings-switch {
+            width: 52px;
+            height: 30px;
+            border: 0;
+            border-radius: 999px;
+            background: rgba(148, 163, 184, 0.25);
+            padding: 3px;
+            cursor: pointer;
+            transition: 0.25s;
+            flex-shrink: 0;
+        }
+
+        .settings-switch span {
+            display: block;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: white;
+            transform: translateX(-22px);
+            transition: 0.25s;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+        }
+
+        .settings-switch.is-on {
+            background: var(--success);
+        }
+
+        .settings-switch.is-on span {
+            transform: translateX(0);
+        }
+
+        .settings-save-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 0.25rem;
+        }
+
+        .settings-save-row .btn {
+            flex: 1;
+            min-height: 50px;
+        }
+
+        @media (max-width: 1280px) {
+            .settings-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .settings-card.security-card {
+                grid-column: 1 / -1;
+            }
+        }
+
+        @media (max-width: 760px) {
+            .settings-hero {
+                align-items: flex-start;
+                flex-direction: column;
+                border-radius: 22px;
+            }
+
+            .settings-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .settings-card.security-card {
+                grid-column: auto;
+            }
+
+            .settings-card {
+                padding: 1.1rem;
+                border-radius: 22px;
+            }
+
+            .settings-logo-box,
+            .settings-toggle-row {
+                align-items: stretch;
+                flex-direction: column;
+            }
+        }
+
+    
+        /* Extra Admin UI Utilities & Badges */
+        .badge-verified {
+            background: rgba(59, 130, 246, 0.15);
+            color: #3B82F6;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .badge-active {
+            background: rgba(16, 185, 129, 0.15);
+            color: #10B981;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 800;
+        }
+        .badge-pending {
+            background: rgba(245, 158, 11, 0.15);
+            color: #F59E0B;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 800;
+        }
+        .badge-banned {
+            background: rgba(239, 68, 68, 0.15);
+            color: #EF4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 800;
+        }
+        .badge-completed {
+            background: rgba(16, 185, 129, 0.15);
+            color: #10B981;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 800;
+        }
+        .badge-cancelled {
+            background: rgba(148, 163, 184, 0.15);
+            color: #94A3B8;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 800;
+        }
+        .stock-control {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255,255,255,0.05);
+            padding: 3px 8px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+        .stock-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: none;
+            color: var(--text-primary);
+            cursor: pointer;
+            width: 24px;
+            height: 24px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            transition: 0.2s;
+            font-weight: 900;
+        }
+        .stock-btn:hover {
+            background: var(--accent);
+            color: white;
+        }
+        .sidebar-badge {
+            margin-right: auto;
+            background: var(--accent);
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 900;
+            padding: 2px 7px;
+            border-radius: 10px;
+        }
+        .action-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: nowrap;
+        }
+        .broadcast-banner-active {
+            background: linear-gradient(135deg, rgba(255,63,0,0.15) 0%, rgba(245,158,11,0.15) 100%);
+            border: 1px solid rgba(255,63,0,0.3);
+            padding: 14px 22px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            box-shadow: 0 10px 25px rgba(255,63,0,0.1);
+        }
+        .modal-body-scroll {
+            max-height: 75vh;
+            overflow-y: auto;
+            padding: 0 5px;
+        }
+        .quick-action-menu {
+            position: relative;
+            display: inline-block;
+        }
+        .quick-action-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: #0B1120;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            min-width: 200px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+            display: none;
+            flex-direction: column;
+            padding: 6px;
+            z-index: 1000;
+        }
+        .quick-action-dropdown.show {
+            display: flex;
+        }
+        .quick-action-item {
+            padding: 10px 14px;
+            color: var(--text-primary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .quick-action-item:hover {
+            background: rgba(255,63,0,0.15);
+            color: var(--accent);
+        }
+
+    </style>
+    <link rel="stylesheet" href="mobile.css">
+</head>
+<body>
+    <div class="admin-mobile-backdrop" id="adminMobileBackdrop" onclick="toggleAdminSidebar(false)"></div>
+    
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-logo">
+            <img src="logo1.png" alt="Logo">
+            <h2>lharfa<span>.ma</span></h2>
+        </div>
+
+        <nav class="nav-menu">
+            <div class="nav-link active" onclick="showView('overview', this)">
+                <i data-lucide="layout-grid"></i>
+                <span>لوحة التحكم</span>
+            </div>
+            <div class="nav-link" onclick="showView('artisans', this)">
+                <i data-lucide="hard-hat"></i>
+                <span>إدارة الحرفيين</span>
+            </div>
+            <div class="nav-link" onclick="showView('clients', this)">
+                <i data-lucide="users"></i>
+                <span>قاعدة الزبناء</span>
+            </div>
+            <div class="nav-link" onclick="showView('bookings', this)">
+                <i data-lucide="calendar-check"></i>
+                <span>الطلبات والحجوزات</span>
+                <span class="sidebar-badge" id="badgeBookings">0</span>
+            </div>
+            <div class="nav-link" onclick="showView('verification', this)">
+                <i data-lucide="shield-check"></i>
+                <span>مركز التوثيق</span>
+                <span class="sidebar-badge" id="badgeVerify">0</span>
+            </div>
+            <div class="nav-link" onclick="showView('inventory', this)">
+                <i data-lucide="package"></i>
+                <span>المتجر والمخزون</span>
+            </div>
+            <div class="nav-link" onclick="showView('newsletter', this)">
+                <i data-lucide="mail"></i>
+                <span>النشرة البريدية</span>
+            </div>
+            <div class="nav-link" onclick="showView('settings', this)">
+                <i data-lucide="settings"></i>
+                <span>الإعدادات العامة</span>
+            </div>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="nav-link" style="color: var(--danger)" onclick="logout()">
+                <i data-lucide="log-out"></i>
+                <span>تسجيل الخروج</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-wrapper">
+        <!-- TOP NAV -->
+        <header class="top-nav">
+            <button class="admin-menu-btn" id="adminMenuBtn" type="button" aria-label="فتح القائمة" onclick="toggleAdminSidebar()">
+                <i data-lucide="menu"></i>
+            </button>
+            
+            <div class="search-container">
+                <i data-lucide="search"></i>
+                <input type="text" class="search-input" placeholder="بحث شامل في الحرفيين، الزبناء، والمنتجات..." id="globalSearch">
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <!-- Quick Action Button -->
+                <div class="quick-action-menu">
+                    <button class="btn btn-primary" style="padding: 9px 16px; font-size: 0.85rem;" onclick="toggleQuickMenu(event)">
+                        <i data-lucide="plus"></i>
+                        <span>إجراء سريع</span>
+                    </button>
+                    <div class="quick-action-dropdown" id="quickActionDropdown">
+                        <div class="quick-action-item" onclick="openArtisanModal()">
+                            <i data-lucide="user-plus"></i> إضافة حرفي جديد
+                        </div>
+                        <div class="quick-action-item" onclick="openProductModal()">
+                            <i data-lucide="package-plus"></i> إضافة منتج للمتجر
+                        </div>
+                        <div class="quick-action-item" onclick="showView('settings', document.querySelector('.nav-link[onclick*="settings"]')); document.getElementById('broadcastMsg')?.focus();">
+                            <i data-lucide="megaphone"></i> بث إشعار عام
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Admin Language Switcher -->
+                <div class="dashboard-lang-switcher">
+                    <button class="dashboard-lang-btn" onclick="toggleAdminLangDropdown(event)" aria-label="Change Language" style="padding: 8px 14px; border-radius: 12px; font-size: 13px;">
+                        <i data-lucide="globe"></i>
+                        <span id="currentAdminLangLabel">AR</span>
+                        <i data-lucide="chevron-down" style="width: 12px; height: 12px;"></i>
+                    </button>
+                    <div id="adminLangDropdown" class="dashboard-lang-dropdown">
+                        <div class="lang-dropdown-header" style="padding: 4px 8px 6px; font-size: 10px; font-weight: 800; color: #94A3B8; border-bottom: 1px solid rgba(255, 255, 255, 0.08); margin-bottom: 4px;">
+                            <span data-i18n="switch_lang">تغيير اللغة</span>
+                        </div>
+                        <a href="#" class="lang-option" data-lang-option="ar" onclick="switchPlatformLang('ar'); return false;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span class="lang-flag" style="font-size: 15px;">🇲🇦</span>
+                                <span>العربية</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <span class="lang-badge" style="font-size: 10px; opacity: 0.6;">AR</span>
+                                <i data-lucide="check" class="lang-check" style="width: 13px; height: 13px; opacity: 0;"></i>
+                            </div>
+                        </a>
+                        <a href="#" class="lang-option" data-lang-option="fr" onclick="switchPlatformLang('fr'); return false;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span class="lang-flag" style="font-size: 15px;">🇫🇷</span>
+                                <span>Français</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <span class="lang-badge" style="font-size: 10px; opacity: 0.6;">FR</span>
+                                <i data-lucide="check" class="lang-check" style="width: 13px; height: 13px; opacity: 0;"></i>
+                            </div>
+                        </a>
+                        <a href="#" class="lang-option" data-lang-option="en" onclick="switchPlatformLang('en'); return false;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span class="lang-flag" style="font-size: 15px;">🇬🇧</span>
+                                <span>English</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <span class="lang-badge" style="font-size: 10px; opacity: 0.6;">EN</span>
+                                <i data-lucide="check" class="lang-check" style="width: 13px; height: 13px; opacity: 0;"></i>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="admin-profile">
+                    <button class="notification-btn" type="button" onclick="PlatformActions.showNotifications()" title="الإشعارات">
+                        <i data-lucide="bell"></i>
+                        <span class="notification-dot"></span>
+                    </button>
+                    <div class="avatar" id="adminAvatar">AD</div>
+                    <div style="text-align: right;">
+                        <div style="font-weight: 800; font-size: 0.9rem;" id="adminName">المدير العام</div>
+                        <div style="font-size: 0.75rem; color: var(--success); display: inline-flex; align-items: center; gap: 4px;" id="adminStatusText"><i data-lucide="circle-dot" size="12"></i> متصل الآن</div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- CONTENT AREA -->
+        <main class="content-area">
+            
+            <!-- BROADCAST BANNER (Delt with dynamically) -->
+            <div id="broadcastBannerArea"></div>
+
+            <!-- VIEW: OVERVIEW -->
+            <div id="view-overview" class="view-panel active">
+                <div class="page-title">
+                    <h1>مركز القيادة الإستراتيجي</h1>
+                    <p>إدارة العمليات والنمو لـ lharfa.ma — تحكم فوري في كافة أركان المنصة</p>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon"><i data-lucide="dollar-sign"></i></div>
+                            <div class="stat-trend trend-up">+14.2% ↑</div>
+                        </div>
+                        <div class="stat-value" id="stat-revenue">0 DH</div>
+                        <div class="stat-label">إجمالي المعاملات والعمولات</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon"><i data-lucide="hard-hat"></i></div>
+                            <div class="stat-trend trend-up" id="trend-artisans">+0</div>
+                        </div>
+                        <div class="stat-value" id="stat-artisans">0</div>
+                        <div class="stat-label">الحرفيين المسجلين</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon"><i data-lucide="users"></i></div>
+                            <div class="stat-trend trend-up" id="trend-clients">+0</div>
+                        </div>
+                        <div class="stat-value" id="stat-clients">0</div>
+                        <div class="stat-label">الزبناء النشطين</div>
+                    </div>
+                    <div class="stat-card" style="border-color: var(--warning);">
+                        <div class="stat-header">
+                            <div class="stat-icon" style="color: var(--warning);"><i data-lucide="shield-alert"></i></div>
+                            <div class="stat-trend trend-up" style="color: var(--warning);">مراجعة</div>
+                        </div>
+                        <div class="stat-value" id="stat-pending-verify">0</div>
+                        <div class="stat-label">طلبات توثيق معلقة</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon" style="color: #6366F1;"><i data-lucide="calendar"></i></div>
+                            <div class="stat-trend trend-up" style="color: #6366F1;">نشط</div>
+                        </div>
+                        <div class="stat-value" id="stat-bookings">0</div>
+                        <div class="stat-label">الحجوزات والطلبات</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon" style="color: #EC4899;"><i data-lucide="package"></i></div>
+                            <div class="stat-trend" id="stat-stock-alert" style="color: var(--success);">جاهز</div>
+                        </div>
+                        <div class="stat-value" id="stat-tools">0</div>
+                        <div class="stat-label">معدات المتجر</div>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h3 class="panel-title"><i data-lucide="trending-up"></i> إحصائيات النشاط والنمو الأسبوعي</h3>
+                        </div>
+                        <div style="height: 300px;">
+                            <canvas id="growthChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="panel">
+                        <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center;">
+                            <h3 class="panel-title"><i data-lucide="zap"></i> سجل النشاطات الحية في المنصة</h3>
+                            <button class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.75rem;" onclick="renderDashboard()">
+                                <i data-lucide="refresh-cw"></i> تحديث
+                            </button>
+                        </div>
+                        <div class="activity-list" id="activityFeed">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: ARTISANS -->
+            <div id="view-artisans" class="view-panel">
+                <div class="page-title" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                    <div>
+                        <h1>إدارة الحرفيين</h1>
+                        <p>التحكم الكامل في حسابات الحرفيين، التوثيق، الحظر، والتعديل</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="openArtisanModal()">
+                        <i data-lucide="user-plus"></i> إضافة حرفي جديد
+                    </button>
+                </div>
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3 class="panel-title"><i data-lucide="users"></i> قائمة الحرفيين</h3>
+                        <div class="filter-group">
+                            <select class="filter-select" id="artisanCityFilter" onchange="filterArtisans()">
+                                <option value="">كل المدن</option>
+                                <option value="تارودانت">تارودانت</option>
+                                <option value="مراكش">مراكش</option>
+                                <option value="أكادير">أكادير</option>
+                                <option value="الدار البيضاء">الدار البيضاء</option>
+                                <option value="الرباط">الرباط</option>
+                                <option value="طنجة">طنجة</option>
+                                <option value="فاس">فاس</option>
+                            </select>
+                            <select class="filter-select" id="artisanStatusFilter" onchange="filterArtisans()">
+                                <option value="">كل الحالات</option>
+                                <option value="نشط">نشط</option>
+                                <option value="pending">قيد المراجعة</option>
+                                <option value="banned">محظور</option>
+                            </select>
+                            <select class="filter-select" id="artisanVerifyFilter" onchange="filterArtisans()">
+                                <option value="">كل التوثيق</option>
+                                <option value="verified">موثق فقط</option>
+                                <option value="unverified">غير موثق</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table class="elite-table">
+                            <thead>
+                                <tr>
+                                    <th>الحرفي</th>
+                                    <th>التخصص</th>
+                                    <th>المدينة</th>
+                                    <th>التقييم</th>
+                                    <th>التوثيق</th>
+                                    <th>الحالة</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="artisanTableBody">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: CLIENTS -->
+            <div id="view-clients" class="view-panel">
+                <div class="page-title">
+                    <h1>قاعدة الزبناء</h1>
+                    <p>متابعة نشاطات المستخدمين، طلباتهم، والتحكم في حساباتهم</p>
+                </div>
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3 class="panel-title"><i data-lucide="user-check"></i> إدارة الزبناء</h3>
+                        <div class="filter-group">
+                            <select class="filter-select" id="clientCityFilter" onchange="filterClients()">
+                                <option value="">كل المدن</option>
+                                <option value="تارودانت">تارودانت</option>
+                                <option value="مراكش">مراكش</option>
+                                <option value="أكادير">أكادير</option>
+                                <option value="الدار البيضاء">الدار البيضاء</option>
+                                <option value="الرباط">الرباط</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table class="elite-table">
+                            <thead>
+                                <tr>
+                                    <th>الزبون</th>
+                                    <th>البريد الإلكتروني</th>
+                                    <th>المدينة</th>
+                                    <th>رقم الهاتف</th>
+                                    <th>الطلبات</th>
+                                    <th>الحالة</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="clientTableBody">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: BOOKINGS (NEW) -->
+            <div id="view-bookings" class="view-panel">
+                <div class="page-title" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                    <div>
+                        <h1>إدارة الحجوزات والطلبات</h1>
+                        <p>متابعة كافة طلبات الصيانة والخدمات بين الزبناء والحرفيين وتعديل حالتها</p>
+                    </div>
+                    <div style="font-size: 0.9rem; font-weight: 800; color: var(--accent);" id="bookingsTotalSummary">
+                        إجمالي الطلبات: 0
+                    </div>
+                </div>
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3 class="panel-title"><i data-lucide="calendar"></i> سجل الطلبات والمعاملات</h3>
+                        <div class="filter-group">
+                            <select class="filter-select" id="bookingStatusFilter" onchange="filterBookings()">
+                                <option value="">كل الحالات</option>
+                                <option value="pending">قيد الانتظار</option>
+                                <option value="confirmed">مؤكد</option>
+                                <option value="completed">مكتمل</option>
+                                <option value="cancelled">ملغى</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table class="elite-table">
+                            <thead>
+                                <tr>
+                                    <th>رقم الحجز</th>
+                                    <th>الزبون</th>
+                                    <th>الحرفي</th>
+                                    <th>الخدمة المطلوبة</th>
+                                    <th>التاريخ</th>
+                                    <th>المدينة</th>
+                                    <th>الحالة</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bookingTableBody">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: VERIFICATION -->
+            <div id="view-verification" class="view-panel">
+                <div class="page-title">
+                    <h1>مركز التوثيق والشارات</h1>
+                    <p>مراجعة الوثائق الرسمية ومنح أو إلغاء شارة الحرفي المعتمد والموثوق</p>
+                </div>
+                <div class="panel">
+                    <div class="table-container">
+                        <table class="elite-table">
+                            <thead>
+                                <tr>
+                                    <th>الحرفي</th>
+                                    <th>التخصص</th>
+                                    <th>نوع الوثيقة</th>
+                                    <th>تاريخ التقديم</th>
+                                    <th>معاينة الوثيقة</th>
+                                    <th>القرار</th>
+                                </tr>
+                            </thead>
+                            <tbody id="verificationTableBody">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: INVENTORY -->
+            <div id="view-inventory" class="view-panel">
+                <div class="page-title" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                    <div>
+                        <h1>إدارة متجر المعدات والمخزون</h1>
+                        <p>التحكم الكامل في الأدوات، الأسعار، المخزون، وإضافة منتجات جديدة</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="openProductModal()">
+                        <i data-lucide="plus-circle" size="18"></i>
+                        إضافة منتج جديد
+                    </button>
+                </div>
+                <div class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <h3 class="panel-title">قائمة المعدات والأدوات</h3>
+                            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 5px;" id="inventoryCountText">
+                                جاري تحميل المنتجات...
+                            </p>
+                        </div>
+                        <div class="filter-group">
+                            <select class="filter-select" id="toolCategoryFilter" onchange="filterTools()">
+                                <option value="">كل التصنيفات</option>
+                                <option value="power">كهربائية</option>
+                                <option value="hand">يدوية</option>
+                                <option value="measurement">قياس</option>
+                                <option value="safety">سلامة</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table class="elite-table">
+                            <thead>
+                                <tr>
+                                    <th>المنتج</th>
+                                    <th>العلامة التجارية</th>
+                                    <th>السعر</th>
+                                    <th>المخزون (تحكم سريع)</th>
+                                    <th>الحالة</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventoryTableBody">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: NEWSLETTER (NEW) -->
+            <div id="view-newsletter" class="view-panel">
+                <div class="page-title" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                    <div>
+                        <h1>النشرة البريدية والزبناء المحتملين</h1>
+                        <p>قائمة عناوين البريد الإلكتروني المسجلة في النشرة الإخبارية عبر الموقع</p>
+                    </div>
+                    <button class="btn btn-secondary" onclick="exportNewsletterCSV()">
+                        <i data-lucide="download"></i>
+                        تصدير القائمة (CSV)
+                    </button>
+                </div>
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3 class="panel-title"><i data-lucide="mail"></i> المشتركون المسجلون</h3>
+                        <span id="newsletterCount" style="color: var(--accent); font-weight: 800; font-size: 0.9rem;">0 مشترك</span>
+                    </div>
+                    <div class="table-container">
+                        <table class="elite-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>البريد الإلكتروني</th>
+                                    <th>تاريخ التسجيل</th>
+                                    <th>الحالة</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="newsletterTableBody">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: SETTINGS -->
+            <div id="view-settings" class="view-panel">
+                <div class="page-title">
+                    <h1>الإعدادات العامة وإدارة المنصة</h1>
+                    <p>تخصيص منصة lharfa.ma، التحكم في وضع العمليات، وبث الإشعارات الحية</p>
+                </div>
+
+                <div class="settings-shell">
+                    <div class="settings-hero">
+                        <div class="settings-hero-content">
+                            <span class="settings-kicker">نظام القيادة الرئيسي</span>
+                            <h2>إعدادات المنصة</h2>
+                            <p>تحكم فوري في بيانات العلامة التجارية، سياسة التسجيل، ووضع التشغيل العام.</p>
+                        </div>
+                        <div class="settings-hero-side">
+                            <span class="settings-status-pill" id="settingsStatusPill"><i data-lucide="activity" size="14"></i> النظام مباشر</span>
+                        </div>
+                    </div>
+
+                    <div class="settings-grid">
+                        <!-- Card 1: Identity -->
+                        <section class="settings-card">
+                            <div class="settings-card-head">
+                                <span class="settings-icon-chip"><i data-lucide="globe"></i></span>
+                                <div>
+                                    <h3>بيانات المنصة</h3>
+                                    <p>المعلومات الرسمية للموقع</p>
+                                </div>
+                            </div>
+                            <div class="settings-fields">
+                                <div class="settings-field">
+                                    <label for="platformName">اسم المنصة</label>
+                                    <input id="platformName" type="text" class="settings-input" value="lharfa.ma">
+                                </div>
+                                <div class="settings-field">
+                                    <label for="platformEmail">البريد الإلكتروني الرسمي</label>
+                                    <input id="platformEmail" type="email" class="settings-input" value="adminlharfa@gmail.com">
+                                </div>
+                                <div class="settings-field">
+                                    <label for="platformPhone">رقم هاتف الدعم / واتساب</label>
+                                    <input id="platformPhone" type="text" class="settings-input" value="+212 783-086770">
+                                </div>
+                                <div class="settings-field">
+                                    <label for="platformCommission">نسبة عمولة المنصة (%)</label>
+                                    <input id="platformCommission" type="number" class="settings-input" value="15">
+                                </div>
+                                <div class="settings-field">
+                                    <label for="platformCurrency">العملة الأساسية</label>
+                                    <select id="platformCurrency" class="settings-input">
+                                        <option value="MAD" selected>درهم مغربي (MAD / DH)</option>
+                                        <option value="EUR">يورو (€ / EUR)</option>
+                                        <option value="USD">دولار أمريكي ($ / USD)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Card 2: System Mode & Access -->
+                        <section class="settings-card">
+                            <div class="settings-card-head">
+                                <span class="settings-icon-chip"><i data-lucide="sliders"></i></span>
+                                <div>
+                                    <h3>وضع التشغيل وسياسة التسجيل</h3>
+                                    <p>التحكم في وصول المستخدمين</p>
+                                </div>
+                            </div>
+                            <div class="settings-fields">
+                                <div class="settings-field">
+                                    <label for="platformMode">الوضع التشغيلي للمنصة</label>
+                                    <select id="platformMode" class="settings-input" onchange="updateSettingsStatus()">
+                                        <option value="live" selected>وضع مباشر (Live) - المنصة متاحة بالكامل للعموم</option>
+                                        <option value="maintenance">وضع الصيانة (Maintenance) - إظهار شاشة الصيانة</option>
+                                        <option value="private">وضع المطورين (Private / Dev)</option>
+                                    </select>
+                                </div>
+
+                                <div class="settings-toggle-row" style="margin-top: 15px;">
+                                    <div>
+                                        <div style="font-weight: 800; font-size: 0.95rem;">السماح بتسجيل حسابات جديدة</div>
+                                        <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 3px;">
+                                            عند إيقاف هذا الخيار، سيتم منع تسجيل حرفيين أو زبناء جدد مؤقتاً
+                                        </div>
+                                    </div>
+                                    <button type="button" class="settings-switch is-on" id="registrationToggle" onclick="toggleRegistrationSetting()">
+                                        <span class="settings-switch-handle"></span>
+                                    </button>
+                                </div>
+
+                                <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 20px 0;">
+
+                                <!-- Live Broadcast Section -->
+                                <div>
+                                    <div style="font-weight: 900; font-size: 0.95rem; color: var(--accent); margin-bottom: 8px;">
+                                        <i data-lucide="megaphone" size="16"></i> بث إشعار وتنبيه لجميع الزوار
+                                    </div>
+                                    <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 12px;">
+                                        يمكنك إرسال شريط تنبيه فوري يظهر في أعلى الموقع لكافة المستخدمين.
+                                    </p>
+                                    <div class="settings-field">
+                                        <input type="text" id="broadcastMsg" class="settings-input" placeholder="مثال: خصم خاص 20% للحرفيين الجدد طيلة هذا الشهر!">
+                                    </div>
+                                    <div style="display: flex; gap: 10px; margin-top: 10px;">
+                                        <button class="btn btn-primary" type="button" style="padding: 9px 16px; font-size: 0.85rem;" onclick="broadcastAnnouncement()">
+                                            بث الإشعار الآن
+                                        </button>
+                                        <button class="btn btn-secondary" type="button" style="padding: 9px 16px; font-size: 0.85rem;" onclick="clearBroadcastAnnouncement()">
+                                            إلغاء البث
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Card 3: Security & Actions -->
+                        <section class="settings-card security-card" style="grid-column: 1 / -1;">
+                            <div class="settings-card-head">
+                                <span class="settings-icon-chip"><i data-lucide="shield"></i></span>
+                                <div>
+                                    <h3>حفظ التغييرات</h3>
+                                    <p>تطبيق جميع الإعدادات فورياً عبر الموقع</p>
+                                </div>
+                            </div>
+                            <div class="settings-save-row" style="margin-top: 15px;">
+                                <button class="btn btn-secondary" type="button" onclick="resetSettingsForm()">
+                                    <i data-lucide="rotate-ccw"></i>
+                                    استرجاع الافتراضي
+                                </button>
+                                <button class="btn btn-primary" type="button" onclick="saveSettings()">
+                                    <i data-lucide="save"></i>
+                                    حفظ وتطبيق الإعدادات
+                                </button>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- ==============================================
+         MODALS (FULL CRUD FOR THE WHOLE PLATFORM)
+         ============================================== -->
+
+    <!-- 1. PRODUCT MODAL (ADD / EDIT TOOL) -->
+    <div class="modal-overlay" id="productModal">
+        <div class="modal modal-body-scroll" style="max-width: 600px; text-align: right;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div class="stat-icon" style="margin: 0;"><i data-lucide="package-plus"></i></div>
+                    <h3 id="productModalHeading" style="margin: 0;">إضافة منتج جديد للمتجر</h3>
+                </div>
+                <button type="button" class="stock-btn" onclick="closeProductModal()"><i data-lucide="x"></i></button>
+            </div>
+            
+            <form id="productForm" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; text-align: right;">
+                <input type="hidden" name="productId" id="productFormId">
+                <div style="grid-column: span 2;">
+                    <label style="font-weight:700; font-size:0.85rem;">اسم المنتج الكامل</label>
+                    <input type="text" name="name" id="toolName" class="search-input" required placeholder="مثال: Bosch Professional GSR 18V-55">
+                </div>
+                <div>
+                    <label style="font-weight:700; font-size:0.85rem;">العلامة التجارية</label>
+                    <input type="text" name="brand" id="toolBrand" class="search-input" required placeholder="مثل: Bosch, Makita, DeWalt, Ingco">
+                </div>
+                <div>
+                    <label style="font-weight:700; font-size:0.85rem;">التصنيف</label>
+                    <select name="category" id="toolCategory" class="search-input">
+                        <option value="power" selected>أدوات كهربائية</option>
+                        <option value="hand">أدوات يدوية</option>
+                        <option value="measurement">أدوات القياس</option>
+                        <option value="safety">معدات السلامة</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="font-weight:700; font-size:0.85rem;">الثمن (درهم مغربي)</label>
+                    <input type="number" step="0.5" name="price" id="toolPrice" class="search-input" required placeholder="0.00">
+                </div>
+                <div>
+                    <label style="font-weight:700; font-size:0.85rem;">الكمية المتوفرة بالمخزون</label>
+                    <input type="number" name="stock" id="toolStock" class="search-input" required placeholder="0">
+                </div>
+                <div style="grid-column: span 2;">
+                    <label style="font-weight:700; font-size:0.85rem;">صورة المنتج</label>
+                    <div class="file-upload-zone" id="dropZone">
+                        <input type="file" id="fileInput" accept="image/*" style="display: none;">
+                        <div id="previewContainer" style="display: none; position: relative; width: 100%;">
+                            <img id="imagePreview" src="" style="width: 100%; max-height: 150px; object-fit: contain; border-radius: 12px;">
+                            <button type="button" class="action-btn" style="position: absolute; top: 0; right: 0; background: var(--danger); color: white;" onclick="removeImage()">
+                                <i data-lucide="x" size="14"></i>
+                            </button>
+                        </div>
+                        <div id="uploadPlaceholder" onclick="document.getElementById('fileInput').click()">
+                            <i data-lucide="upload-cloud" size="32" style="color: var(--accent); margin-bottom: 10px;"></i>
+                            <p style="font-size: 0.8rem; color: var(--text-secondary);">اسحب الصورة هنا أو <span style="color: var(--accent); font-weight: 800;">اضغط للرفع من حاسوبك</span></p>
+                        </div>
+                    </div>
+                </div>
+                <div style="grid-column: span 2;">
+                    <label style="font-weight:700; font-size:0.85rem;">وصف ومواصفات المنتج</label>
+                    <textarea name="description" id="toolDescription" class="search-input" style="height: 80px; padding: 12px; resize: none;" placeholder="أدخل تفاصيل ومميزات المنتج..."></textarea>
+                </div>
+                <div class="modal-actions" style="grid-column: span 2; margin-top: 10px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeProductModal()">إلغاء</button>
+                    <button type="submit" class="btn btn-primary" id="saveProductBtn">تأكيد الحفظ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 2. ARTISAN MODAL (ADD / EDIT ARTISAN) -->
+    <div class="modal-overlay" id="artisanModal">
+        <div class="modal modal-body-scroll" style="max-width: 580px; text-align: right;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div class="stat-icon" style="margin: 0;"><i data-lucide="hard-hat"></i></div>
+                    <h3 id="artisanModalTitle" style="margin: 0;">إضافة حرفي جديد</h3>
+                </div>
+                <button type="button" class="stock-btn" onclick="closeArtisanModal()"><i data-lucide="x"></i></button>
+            </div>
+
+            <form id="artisanForm" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <input type="hidden" id="artisanEditId">
+                <div style="grid-column: span 2;">
+                    <label style="font-weight:700; font-size:0.85rem;">الاسم الكامل للحرفي</label>
+                    <input type="text" id="artisanFormName" class="search-input" required placeholder="مثال: يوسف الإدريسي">
+                </div>
+                <div>
+                    <label style="font-weight:700; font-size:0.85rem;">التخصص الأساسي</label>
+                    <input type="text" id="artisanFormSpec" class="search-input" required placeholder="مثال: نجارة خشبية">
+                </div>
+                <div>
+                    <label style="font-weight:700; font-size:0.85rem;">المدينة</label>
+                    <select id="artisanFormCity" class="search-input">
+                        <option value="تارودانت">تارودانت</option>
+                        <option value="أكادير">أكادير</option>
+                        <option value="مراكش">مراكش</option>
+                        <option value="الدار البيضاء">الدار البيضاء</option>
+                        <option value="الرباط">الرباط</option>
+                        <option value="طنجة">طنجة</option>
+                        <option value="فاس">فاس</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="font-weight:700; font-size:0.85rem;">رقم الهاتف</label>
+                    <input type="tel" id="artisanFormPhone" class="search-input" placeholder="0600000000">
+                </div>
+                <div>
+                    <label style="font-weight:700; font-size:0.85rem;">التقييم (1 إلى 5)</label>
+                    <input type="number" step="0.1" min="1" max="5" id="artisanFormRating" class="search-input" value="4.8">
+                </div>
+                <div>
+                    <label style="font-weight:700; font-size:0.85rem;">حالة الحساب</label>
+                    <select id="artisanFormStatus" class="search-input">
+                        <option value="نشط">نشط</option>
+                        <option value="pending">قيد المراجعة</option>
+                        <option value="banned">محظور</option>
+                    </select>
+                </div>
+                <div style="display: flex; flex-direction: column; justify-content: center;">
+                    <label style="font-weight:700; font-size:0.85rem; margin-bottom: 6px;">شارة التوثيق الرسمي</label>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="checkbox" id="artisanFormVerified" style="width: 18px; height: 18px; accent-color: var(--accent);">
+                        <span style="font-weight: 800; font-size: 0.9rem;">حساب موثق ومفحوص</span>
+                    </label>
+                </div>
+                <div style="grid-column: span 2;">
+                    <label style="font-weight:700; font-size:0.85rem;">نبذة عن الحرفي والخبرات</label>
+                    <textarea id="artisanFormBio" class="search-input" style="height: 70px; resize: none;" placeholder="اكتب نبذة مختصرة عن تجربة الحرفي وخدماته..."></textarea>
+                </div>
+                <div class="modal-actions" style="grid-column: span 2; margin-top: 10px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeArtisanModal()">إلغاء</button>
+                    <button type="submit" class="btn btn-primary" id="saveArtisanBtn">حفظ البيانات</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 3. CLIENT EDIT MODAL -->
+    <div class="modal-overlay" id="clientModal">
+        <div class="modal" style="max-width: 500px; text-align: right;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div class="stat-icon" style="margin: 0;"><i data-lucide="user-cog"></i></div>
+                    <h3 style="margin: 0;">تعديل بيانات الزبون</h3>
+                </div>
+                <button type="button" class="stock-btn" onclick="closeClientModal()"><i data-lucide="x"></i></button>
+            </div>
+
+            <form id="clientForm" style="display: flex; flex-direction: column; gap: 1rem;">
+                <input type="hidden" id="clientEditId">
+                <div>
+                    <label style="font-weight:700; font-size:0.85rem;">الاسم الكامل</label>
+                    <input type="text" id="clientFormName" class="search-input" required>
+                </div>
+                <div>
+                    <label style="font-weight:700; font-size:0.85rem;">البريد الإلكتروني</label>
+                    <input type="email" id="clientFormEmail" class="search-input" required>
+                </div>
+                <div>
+                    <label style="font-weight:700; font-size:0.85rem;">المدينة</label>
+                    <input type="text" id="clientFormCity" class="search-input" placeholder="المدينة">
+                </div>
+                <div>
+                    <label style="font-weight:700; font-size:0.85rem;">رقم الهاتف</label>
+                    <input type="tel" id="clientFormPhone" class="search-input" placeholder="0600000000">
+                </div>
+                <div>
+                    <label style="font-weight:700; font-size:0.85rem;">حالة الحساب</label>
+                    <select id="clientFormStatus" class="search-input">
+                        <option value="نشط">نشط</option>
+                        <option value="banned">محظور</option>
+                    </select>
+                </div>
+                <div class="modal-actions" style="margin-top: 10px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeClientModal()">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">تحديث بيانات الزبون</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 4. CLIENT BOOKINGS HISTORY MODAL -->
+    <div class="modal-overlay" id="clientBookingsModal">
+        <div class="modal modal-body-scroll" style="max-width: 650px; text-align: right;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+                <h3 id="clientBookingsTitle" style="margin: 0;">سجل طلبات الزبون</h3>
+                <button type="button" class="stock-btn" onclick="document.getElementById('clientBookingsModal').style.display='none'"><i data-lucide="x"></i></button>
+            </div>
+            <div id="clientBookingsContent">
+                <!-- Injected dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. DOCUMENT PREVIEW MODAL -->
+    <div class="modal-overlay" id="docPreviewModal">
+        <div class="modal" style="max-width: 520px; text-align: center;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 id="docPreviewTitle" style="margin: 0;">معاينة الوثيقة الرسمية</h3>
+                <button type="button" class="stock-btn" onclick="document.getElementById('docPreviewModal').style.display='none'"><i data-lucide="x"></i></button>
+            </div>
+            <div style="background: rgba(255,255,255,0.03); border: 2px dashed var(--border-color); border-radius: 16px; padding: 30px; margin: 15px 0;">
+                <i data-lucide="file-check-2" size="64" style="color: var(--accent); margin-bottom: 12px;"></i>
+                <h4 id="docArtisanName" style="color: var(--text-primary); margin-bottom: 5px;">الحرفي: --</h4>
+                <p id="docTypeDetail" style="color: var(--text-secondary); font-size: 0.9rem;">بطاقة التعريف الوطنية (CNIE) / شهادة التكوين المهني</p>
+                <div style="background: rgba(16,185,129,0.1); color: var(--success); padding: 8px 16px; border-radius: 12px; margin-top: 15px; font-weight: 800; font-size: 0.85rem;">
+                    وثيقة رقمية صالحة ومطابقة للمعايير
+                </div>
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button class="btn btn-secondary" onclick="document.getElementById('docPreviewModal').style.display='none'">إغلاق</button>
+                <button class="btn btn-primary" id="docApproveBtn">موافقة وتوثيق الحساب</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. DYNAMIC CONFIRMATION MODAL -->
+    <div class="modal-overlay" id="quickModal">
+        <div class="modal" style="max-width: 450px;">
+            <div class="modal-icon" id="modalIcon">
+                <i data-lucide="alert-triangle" size="40"></i>
+            </div>
+            <h3 id="modalTitle">تأكيد الإجراء</h3>
+            <p id="modalDesc">هل أنت متأكد من رغبتك في تنفيذ هذا الإجراء؟</p>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeModal()">إلغاء</button>
+                <button class="btn btn-primary" id="confirmBtn">تأكيد التنفيذ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPT LOGIC -->
+    <script>
+        // ==========================================
+        // ADMIN PLATFORM FULL CONTROLLER
+        // ==========================================
+
+        let currentData = {
+            artisans: [],
+            clients: [],
+            tools: [],
+            bookings: [],
+            activities: [],
+            newsletter: []
+        };
+
+        let currentEditingToolId = null;
+        let growthChartInstance = null;
+
+        // --- AUTH CHECK & INIT ---
+        document.addEventListener('DOMContentLoaded', async () => {
+            const user = JSON.parse(localStorage.getItem('albane_user') || '{}');
+            const token = localStorage.getItem('albane_token');
+            if (!token || user.role !== 'admin') {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            if (user && user.name) {
+                document.getElementById('adminName').textContent = user.name;
+                document.getElementById('adminAvatar').textContent = user.name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
+            }
+
+            await loadData();
+            renderDashboard();
+            initCharts();
+            initSettingsForm();
+            checkActiveBroadcast();
+            lucide.createIcons();
+
+            // Live Search Handler
+            document.getElementById('globalSearch').addEventListener('input', (e) => {
+                const term = e.target.value.toLowerCase().trim();
+                filterAllTables(term);
+            });
+
+            // ESC handler to close modals & dropdowns
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    toggleAdminSidebar(false);
+                    closeModal();
+                    closeProductModal();
+                    closeArtisanModal();
+                    closeClientModal();
+                    document.getElementById('clientBookingsModal').style.display = 'none';
+                    document.getElementById('docPreviewModal').style.display = 'none';
+                    document.getElementById('quickActionDropdown').classList.remove('show');
+                }
+            });
+
+            // Close quick action dropdown on outside click
+            window.addEventListener('click', (e) => {
+                const menu = document.getElementById('quickActionDropdown');
+                if (menu && !e.target.closest('.quick-action-menu')) {
+                    menu.classList.remove('show');
+                }
+            });
+        });
+
+        // --- DATA LOADER (SUPABASE + SEED FALLBACK) ---
+        async function loadData() {
+            try {
+                const [artRes, clRes, tlRes, actRes, bkRes, newsRes] = await Promise.all([
+                    api.getArtisans(),
+                    api.getClients(),
+                    api.getTools(),
+                    api.getActivities(),
+                    api.getBookings(),
+                    api.getNewsletterSubscribers ? api.getNewsletterSubscribers() : Promise.resolve({ success: true, data: [] })
+                ]);
+
+                // Default initial dataset if Supabase is offline or tables are empty
+                const defaultArtisans = [
+                    { id: '1', name: 'ياسين العلمي', spec: 'الكهرباء المنزلية', category: 'electricity', city: 'تارودانت', rating: 4.9, verified: true, status: 'نشط', phone: '0612345678' },
+                    { id: '2', name: 'كريم بنجلون', spec: 'السباكة والترصيص', category: 'plumbing', city: 'تارودانت', rating: 4.8, verified: true, status: 'نشط', phone: '0623456789' },
+                    { id: '3', name: 'هشام بناني', spec: 'النجارة والديكور', category: 'carpentry', city: 'أكادير', rating: 4.7, verified: false, status: 'pending', phone: '0634567890' },
+                    { id: '4', name: 'عمر التازي', spec: 'الصباغة والديكور الحديث', category: 'painting', city: 'مراكش', rating: 4.6, verified: true, status: 'نشط', phone: '0645678901' },
+                    { id: '5', name: 'حمزة السوسي', spec: 'تركيب وصيانة التكييف', category: 'hvac', city: 'تارودانت', rating: 4.5, verified: false, status: 'pending', phone: '0656789012' }
+                ];
+
+                const defaultClients = [
+                    { id: 'c1', name: 'أحمد المنصوري', email: 'ahmed.mansouri@gmail.com', city: 'تارودانت', phone: '0661122334', count: 3, status: 'نشط' },
+                    { id: 'c2', name: 'فاطمة الزهراء الشاوي', email: 'fz.chaoui@yahoo.fr', city: 'أكادير', phone: '0672233445', count: 5, status: 'نشط' },
+                    { id: 'c3', name: 'رشيد المرابط', email: 'morabit.rachid@hotmail.com', city: 'مراكش', phone: '0653344556', count: 1, status: 'نشط' },
+                    { id: 'c4', name: 'مريم العمراني', email: 'meryem.amrani@gmail.com', city: 'الدار البيضاء', phone: '0684455667', count: 4, status: 'نشط' }
+                ];
+
+                const defaultBookings = [
+                    { id: 'BK-101', client: 'أحمد المنصوري', artisan: 'ياسين العلمي', service: 'إصلاح عطل كهربائي عام', city: 'تارودانت', date: '2026-10-22', status: 'confirmed', price: 250 },
+                    { id: 'BK-102', client: 'فاطمة الزهراء الشاوي', artisan: 'كريم بنجلون', service: 'تركيب سخان ماء جديد', city: 'أكادير', date: '2026-10-23', status: 'pending', price: 350 },
+                    { id: 'BK-103', client: 'رشيد المرابط', artisan: 'عمر التازي', service: 'صباغة صالون مغربي', city: 'مراكش', date: '2026-10-24', status: 'completed', price: 1200 },
+                    { id: 'BK-104', client: 'مريم العمراني', artisan: 'حمزة السوسي', service: 'تنظيف وصيانة مكيف هوائي', city: 'تارودانت', date: '2026-10-25', status: 'pending', price: 200 }
+                ];
+
+                const defaultTools = [
+                    { id: 't1', name: 'Bosch Professional GSR 18V-55', brand: 'Bosch', category: 'power', price: 1450, stock: 12, image: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&q=80&w=200' },
+                    { id: 't2', name: 'Makita DHR202Z Rotary Hammer', brand: 'Makita', category: 'power', price: 1890, stock: 3, image: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&q=80&w=200' },
+                    { id: 't3', name: 'Ingco 100-Piece Hand Tool Set', brand: 'Ingco', category: 'hand', price: 420, stock: 18, image: 'https://images.unsplash.com/photo-1581244277943-fe4a9c777189?auto=format&fit=crop&q=80&w=200' },
+                    { id: 't4', name: 'Stanley Laser Distance Measurer 50m', brand: 'Stanley', category: 'measurement', price: 680, stock: 2, image: 'https://images.unsplash.com/photo-1572981779307-38b8cabb2407?auto=format&fit=crop&q=80&w=200' }
+                ];
+
+                const defaultNewsletter = [
+                    { id: 'nl1', email: 'pro.artisan2026@gmail.com', date: '2026-10-18', status: 'نشط' },
+                    { id: 'nl2', email: 'contact.client.maroc@gmail.com', date: '2026-10-19', status: 'نشط' },
+                    { id: 'nl3', email: 'taroudant.services@outlook.com', date: '2026-10-20', status: 'نشط' }
+                ];
+
+                const defaultActivities = [
+                    { icon: 'shield-check', text: 'تم توثيق الحساب الرسمي للحرفي ياسين العلمي', time: 'منذ 10 دقائق', color: '#10B981' },
+                    { icon: 'calendar-check', text: 'طلب صيانة جديد مسجل في تارودانت (أحمد المنصوري)', time: 'منذ ساعة', color: '#6366F1' },
+                    { icon: 'package-plus', text: 'تم تحديث مخزون الأدوات الكهربائية في المتجر', time: 'منذ 3 ساعات', color: '#FF3F00' }
+                ];
+
+                currentData = {
+                    artisans: (artRes.data && artRes.data.length) ? artRes.data : defaultArtisans,
+                    clients: (clRes.data && clRes.data.length) ? clRes.data : defaultClients,
+                    tools: (tlRes.data && tlRes.data.length) ? tlRes.data : defaultTools,
+                    bookings: (bkRes.data && bkRes.data.length) ? bkRes.data : defaultBookings,
+                    newsletter: (newsRes.data && newsRes.data.length) ? newsRes.data : defaultNewsletter,
+                    activities: (actRes.data && actRes.data.length) ? actRes.data : defaultActivities
+                };
+            } catch (err) {
+                console.error("Data loading fallback applied:", err);
+            }
+        }
+
+        // --- SPA NAVIGATION ---
+        function toggleAdminSidebar(force) {
+            const sidebar = document.getElementById('sidebar');
+            if (!sidebar) return;
+            const shouldOpen = typeof force === 'boolean' ? force : !sidebar.classList.contains('open');
+            sidebar.classList.toggle('open', shouldOpen);
+            document.body.classList.toggle('sidebar-open', shouldOpen);
+        }
+
+        function showView(viewId, el) {
+            document.querySelectorAll('.view-panel').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
+            
+            const targetView = document.getElementById(`view-${viewId}`);
+            if (targetView) targetView.classList.add('active');
+            
+            if (el) {
+                el.classList.add('active');
+            } else {
+                const link = document.querySelector(`.nav-link[onclick*="${viewId}"]`);
+                if (link) link.classList.add('active');
+            }
+            
+            renderTables(viewId);
+            toggleAdminSidebar(false);
+            lucide.createIcons();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // --- RENDERING KPI & DASHBOARD ---
+        function renderDashboard() {
+            // Calculate live revenue from bookings and tools
+            const bookingsRev = currentData.bookings.reduce((sum, b) => sum + (Number(b.price) || 0), 0);
+            const totalCommission = Math.round(bookingsRev * 0.15) + 38500;
+            
+            document.getElementById('stat-revenue').innerHTML = `${totalCommission.toLocaleString()} DH`;
+            document.getElementById('stat-artisans').textContent = currentData.artisans.length;
+            document.getElementById('stat-clients').textContent = currentData.clients.length;
+            
+            const pendingVerifications = currentData.artisans.filter(a => !a.verified).length;
+            document.getElementById('stat-pending-verify').textContent = pendingVerifications;
+            document.getElementById('badgeVerify').textContent = pendingVerifications;
+
+            const activeBookings = currentData.bookings.filter(b => b.status === 'pending' || b.status === 'confirmed').length;
+            document.getElementById('stat-bookings').textContent = activeBookings;
+            document.getElementById('badgeBookings').textContent = activeBookings;
+
+            document.getElementById('stat-tools').textContent = currentData.tools.length;
+            
+            const lowStockCount = currentData.tools.filter(t => t.stock < 5).length;
+            const stockAlert = document.getElementById('stat-stock-alert');
+            if (lowStockCount > 0) {
+                stockAlert.textContent = `${lowStockCount} منخفض`;
+                stockAlert.style.color = 'var(--danger)';
+            } else {
+                stockAlert.textContent = 'مستقر';
+                stockAlert.style.color = 'var(--success)';
+            }
+
+            // Activity Feed
+            const feed = document.getElementById('activityFeed');
+            feed.innerHTML = currentData.activities.slice(0, 8).map(act => `
+                <div class="activity-item">
+                    <div class="activity-icon" style="background: ${act.color || '#FF3F00'}15; color: ${act.color || '#FF3F00'}">
+                        <i data-lucide="${act.icon || 'zap'}"></i>
+                    </div>
+                    <div class="activity-details">
+                        <p>${act.text}</p>
+                        <span>${act.time || 'الآن'}</span>
+                    </div>
+                </div>
+            `).join('');
+
+            lucide.createIcons();
+        }
+
+        function renderTables(view) {
+            switch(view) {
+                case 'overview':
+                    renderDashboard();
+                    break;
+                case 'artisans':
+                    renderArtisanTable();
+                    break;
+                case 'clients':
+                    renderClientTable();
+                    break;
+                case 'bookings':
+                    renderBookingTable();
+                    break;
+                case 'verification':
+                    renderVerificationTable();
+                    break;
+                case 'inventory':
+                    renderInventoryTable();
+                    break;
+                case 'newsletter':
+                    renderNewsletterTable();
+                    break;
+            }
+            lucide.createIcons();
+        }
+
+        // --- ARTISANS CONTROLLER ---
+        function renderArtisanTable() {
+            const tbody = document.getElementById('artisanTableBody');
+            if (currentData.artisans.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-secondary); padding: 30px;">لا يوجد حرفيين مسجلين حالياً</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = currentData.artisans.map(a => {
+                const initials = a.name.split(' ').map(n=>n[0]).join('').slice(0,2);
+                const isBanned = a.status === 'banned';
+                const statusBadge = isBanned ? '<span class="badge badge-banned">محظور</span>' : 
+                                   (a.status === 'pending' ? '<span class="badge badge-pending">قيد المراجعة</span>' : '<span class="badge badge-active">نشط</span>');
+                const verifyBadge = a.verified ? 
+                    '<span class="badge badge-verified"><i data-lucide="check" size="12"></i> موثق</span>' : 
+                    '<span style="color:var(--text-secondary); font-size:0.8rem;">غير موثق</span>';
+
+                return `
+                <tr>
+                    <td>
+                        <div class="user-cell">
+                            <div class="avatar" style="background: rgba(255,255,255,0.06); font-size: 0.75rem;">${initials}</div>
+                            <div>
+                                <div style="font-weight: 800;">${a.name}</div>
+                                <div style="font-size: 0.75rem; color: var(--text-secondary);">${a.phone || 'بدون هاتف'}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td><span style="font-weight:700;">${a.spec || a.category || 'عام'}</span></td>
+                    <td>${a.city}</td>
+                    <td>
+                        <div style="display:flex; align-items:center; gap:5px;">
+                            <i data-lucide="star" size="14" style="color:var(--warning); fill:var(--warning);"></i> 
+                            <span style="font-weight:800;">${a.rating || 5.0}</span>
+                        </div>
+                    </td>
+                    <td>${verifyBadge}</td>
+                    <td>${statusBadge}</td>
+                    <td>
+                        <div class="action-group">
+                            <button class="action-btn" title="تعديل الحرفي" onclick="editArtisan('${a.id}')"><i data-lucide="edit-3" size="15"></i></button>
+                            <button class="action-btn" title="${a.verified ? 'إلغاء التوثيق' : 'توثيق الحساب'}" style="color: ${a.verified ? '#3B82F6' : 'var(--text-secondary)'}" onclick="toggleVerifyArtisan('${a.id}')">
+                                <i data-lucide="shield-check" size="15"></i>
+                            </button>
+                            <button class="action-btn" title="${isBanned ? 'فك الحظر' : 'حظر الحرفي'}" style="color: ${isBanned ? 'var(--success)' : 'var(--danger)'}" onclick="toggleBanArtisan('${a.id}', '${a.name}', ${isBanned})">
+                                <i data-lucide="${isBanned ? 'check-circle' : 'slash'}" size="15"></i>
+                            </button>
+                            <button class="action-btn" title="حذف نهائي" style="color: var(--danger)" onclick="confirmDeleteArtisan('${a.id}', '${a.name}')">
+                                <i data-lucide="trash-2" size="15"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `}).join('');
+        }
+
+        function filterArtisans() {
+            const city = document.getElementById('artisanCityFilter').value.toLowerCase().trim();
+            const status = document.getElementById('artisanStatusFilter').value.toLowerCase().trim();
+            const verify = document.getElementById('artisanVerifyFilter').value;
+            const rows = document.querySelectorAll('#artisanTableBody tr');
+
+            rows.forEach(row => {
+                const rowCity = row.children[2]?.innerText.toLowerCase() || '';
+                const rowStatus = row.children[5]?.innerText.toLowerCase() || '';
+                const rowVerify = row.children[4]?.innerText || '';
+
+                const matchCity = !city || rowCity.includes(city);
+                const matchStatus = !status || rowStatus.includes(status);
+                const matchVerify = !verify || (verify === 'verified' ? rowVerify.includes('موثق') : !rowVerify.includes('موثق'));
+
+                row.style.display = (matchCity && matchStatus && matchVerify) ? '' : 'none';
+            });
+        }
+
+        function openArtisanModal(editId = null) {
+            const modal = document.getElementById('artisanModal');
+            document.getElementById('artisanEditId').value = editId || '';
+            document.getElementById('artisanModalTitle').textContent = editId ? 'تعديل بيانات الحرفي' : 'إضافة حرفي جديد للمنصة';
+
+            if (editId) {
+                const a = currentData.artisans.find(art => art.id == editId);
+                if (a) {
+                    document.getElementById('artisanFormName').value = a.name;
+                    document.getElementById('artisanFormSpec').value = a.spec || a.category || '';
+                    document.getElementById('artisanFormCity').value = a.city;
+                    document.getElementById('artisanFormPhone').value = a.phone || '';
+                    document.getElementById('artisanFormRating').value = a.rating || 4.8;
+                    document.getElementById('artisanFormStatus').value = a.status || 'نشط';
+                    document.getElementById('artisanFormVerified').checked = Boolean(a.verified);
+                    document.getElementById('artisanFormBio').value = a.bio || '';
+                }
+            } else {
+                document.getElementById('artisanForm').reset();
+                document.getElementById('artisanFormRating').value = '4.8';
+                document.getElementById('artisanFormVerified').checked = false;
+            }
+
+            modal.style.display = 'flex';
+            lucide.createIcons();
+        }
+
+        function closeArtisanModal() {
+            document.getElementById('artisanModal').style.display = 'none';
+        }
+
+        function editArtisan(id) {
+            openArtisanModal(id);
+        }
+
+        document.getElementById('artisanForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const editId = document.getElementById('artisanEditId').value;
+            const payload = {
+                name: document.getElementById('artisanFormName').value.trim(),
+                spec: document.getElementById('artisanFormSpec').value.trim(),
+                category: document.getElementById('artisanFormSpec').value.trim(),
+                city: document.getElementById('artisanFormCity').value,
+                phone: document.getElementById('artisanFormPhone').value.trim(),
+                rating: parseFloat(document.getElementById('artisanFormRating').value) || 4.8,
+                status: document.getElementById('artisanFormStatus').value,
+                verified: document.getElementById('artisanFormVerified').checked,
+                bio: document.getElementById('artisanFormBio').value.trim()
+            };
+
+            if (editId) {
+                // Update
+                if (api.updateArtisan) await api.updateArtisan(editId, payload);
+                const idx = currentData.artisans.findIndex(a => a.id == editId);
+                if (idx !== -1) currentData.artisans[idx] = { ...currentData.artisans[idx], ...payload };
+                PlatformActions.showToast("تم تحديث بيانات الحرفي بنجاح", "success");
+            } else {
+                // Add
+                const res = await api.addArtisan(payload);
+                const newObj = (res && res.data) ? res.data : { id: 'art_' + Date.now(), ...payload };
+                currentData.artisans.unshift(newObj);
+                PlatformActions.showToast("تمت إضافة الحرفي بنجاح إلى المنصة", "success");
+            }
+
+            closeArtisanModal();
+            renderArtisanTable();
+            renderDashboard();
+        };
+
+        async function toggleVerifyArtisan(id) {
+            const a = currentData.artisans.find(art => art.id == id);
+            if (!a) return;
+            const newVerified = !a.verified;
+            if (api.updateArtisan) await api.updateArtisan(id, { verified: newVerified });
+            a.verified = newVerified;
+            PlatformActions.showToast(newVerified ? `تم توثيق الحساب الرسمي لـ "${a.name}"` : `تم إلغاء توثيق "${a.name}"`, "info");
+            renderArtisanTable();
+            renderTables('verification');
+            renderDashboard();
+        }
+
+        function toggleBanArtisan(id, name, isBanned) {
+            openQuickActionModal({
+                title: isBanned ? 'إلغاء حظر الحرفي' : 'حظر الحرفي',
+                desc: isBanned ? `هل تريد فك الحظر عن الحرفي "${name}" واستعادة نشاطه؟` : `هل أنت متأكد من حظر "${name}"؟ لن يتمكن من تلقي أي طلبات صيانة.`,
+                icon: isBanned ? 'check-circle' : 'slash',
+                confirmColor: isBanned ? 'var(--success)' : 'var(--danger)',
+                onConfirm: async () => {
+                    const newStatus = isBanned ? 'نشط' : 'banned';
+                    if (api.updateArtisan) await api.updateArtisan(id, { status: newStatus });
+                    const a = currentData.artisans.find(art => art.id == id);
+                    if (a) a.status = newStatus;
+                    PlatformActions.showToast(isBanned ? `تم تفعيل حساب "${name}"` : `تم حظر "${name}" بنجاح`, "warning");
+                    renderArtisanTable();
+                    renderDashboard();
+                }
+            });
+        }
+
+        function confirmDeleteArtisan(id, name) {
+            openQuickActionModal({
+                title: 'حذف الحرفي نهائياً',
+                desc: `سيتم مسح كافة سجلات وملفات الحرفي "${name}" نهائياً من قاعدة البيانات.`,
+                icon: 'trash-2',
+                confirmColor: 'var(--danger)',
+                onConfirm: async () => {
+                    if (api.deleteArtisan) await api.deleteArtisan(id);
+                    currentData.artisans = currentData.artisans.filter(art => art.id != id);
+                    PlatformActions.showToast(`تم حذف "${name}" بنجاح`, "success");
+                    renderArtisanTable();
+                    renderDashboard();
+                }
+            });
+        }
+
+        // --- CLIENTS CONTROLLER ---
+        function renderClientTable() {
+            const tbody = document.getElementById('clientTableBody');
+            if (currentData.clients.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-secondary); padding: 30px;">لا يوجد زبناء مسجلين حالياً</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = currentData.clients.map(c => {
+                const initials = c.name.split(' ').map(n=>n[0]).join('').slice(0,2);
+                const isBanned = c.status === 'banned';
+                const statusBadge = isBanned ? '<span class="badge badge-banned">محظور</span>' : '<span class="badge badge-active">نشط</span>';
+                
+                return `
+                <tr>
+                    <td>
+                        <div class="user-cell">
+                            <div class="avatar" style="background: rgba(255,255,255,0.06); font-size: 0.75rem;">${initials}</div>
+                            <span style="font-weight: 800;">${c.name}</span>
+                        </div>
+                    </td>
+                    <td>${c.email}</td>
+                    <td>${c.city || 'تارودانت'}</td>
+                    <td>${c.phone || '06--'}</td>
+                    <td><span style="font-weight:800; color:var(--accent);">${c.count || 0} طلبات</span></td>
+                    <td>${statusBadge}</td>
+                    <td>
+                        <div class="action-group">
+                            <button class="action-btn" title="عرض الحجوزات" onclick="viewClientBookings('${c.name}')"><i data-lucide="eye" size="15"></i></button>
+                            <button class="action-btn" title="تعديل" onclick="openClientModal('${c.id}')"><i data-lucide="edit-3" size="15"></i></button>
+                            <button class="action-btn" title="${isBanned ? 'فك الحظر' : 'حظر الزبون'}" style="color: ${isBanned ? 'var(--success)' : 'var(--danger)'}" onclick="toggleBanClient('${c.id}', '${c.name}', ${isBanned})">
+                                <i data-lucide="${isBanned ? 'check-circle' : 'slash'}" size="15"></i>
+                            </button>
+                            <button class="action-btn" title="حذف الزبون" style="color: var(--danger)" onclick="confirmDeleteClient('${c.id}', '${c.name}')">
+                                <i data-lucide="trash-2" size="15"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `}).join('');
+        }
+
+        function filterClients() {
+            const city = document.getElementById('clientCityFilter').value.toLowerCase().trim();
+            const rows = document.querySelectorAll('#clientTableBody tr');
+            rows.forEach(row => {
+                const rowCity = row.children[2]?.innerText.toLowerCase() || '';
+                row.style.display = (!city || rowCity.includes(city)) ? '' : 'none';
+            });
+        }
+
+        function openClientModal(id) {
+            const c = currentData.clients.find(client => client.id == id);
+            if (!c) return;
+            document.getElementById('clientEditId').value = c.id;
+            document.getElementById('clientFormName').value = c.name;
+            document.getElementById('clientFormEmail').value = c.email;
+            document.getElementById('clientFormCity').value = c.city || '';
+            document.getElementById('clientFormPhone').value = c.phone || '';
+            document.getElementById('clientFormStatus').value = c.status || 'نشط';
+            document.getElementById('clientModal').style.display = 'flex';
+            lucide.createIcons();
+        }
+
+        function closeClientModal() {
+            document.getElementById('clientModal').style.display = 'none';
+        }
+
+        document.getElementById('clientForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('clientEditId').value;
+            const payload = {
+                name: document.getElementById('clientFormName').value.trim(),
+                email: document.getElementById('clientFormEmail').value.trim(),
+                city: document.getElementById('clientFormCity').value.trim(),
+                phone: document.getElementById('clientFormPhone').value.trim(),
+                status: document.getElementById('clientFormStatus').value
+            };
+
+            if (api.updateClient) await api.updateClient(id, payload);
+            const idx = currentData.clients.findIndex(c => c.id == id);
+            if (idx !== -1) currentData.clients[idx] = { ...currentData.clients[idx], ...payload };
+
+            closeClientModal();
+            renderClientTable();
+            PlatformActions.showToast("تم تحديث بيانات الزبون بنجاح", "success");
+        };
+
+        function viewClientBookings(clientName) {
+            const bookings = currentData.bookings.filter(b => b.client && b.client.includes(clientName));
+            document.getElementById('clientBookingsTitle').textContent = `سجل حجوزات: ${clientName}`;
+            const container = document.getElementById('clientBookingsContent');
+
+            if (bookings.length === 0) {
+                container.innerHTML = '<div style="padding: 30px; text-align: center; color: var(--text-secondary);">لا توجد حجوزات مسجلة لهذا الزبون حالياً</div>';
+            } else {
+                container.innerHTML = `
+                    <table class="elite-table">
+                        <thead>
+                            <tr>
+                                <th>الخدمة</th>
+                                <th>الحرفي</th>
+                                <th>التاريخ</th>
+                                <th>الحالة</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${bookings.map(b => `
+                                <tr>
+                                    <td>${b.service}</td>
+                                    <td>${b.artisan}</td>
+                                    <td>${b.date}</td>
+                                    <td><span class="badge badge-${b.status}">${b.status}</span></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            }
+            document.getElementById('clientBookingsModal').style.display = 'flex';
+            lucide.createIcons();
+        }
+
+        function toggleBanClient(id, name, isBanned) {
+            openQuickActionModal({
+                title: isBanned ? 'إلغاء حظر الزبون' : 'حظر الزبون',
+                desc: isBanned ? `هل تريد فك الحظر عن حساب الزبون "${name}"؟` : `هل أنت متأكد من حظر حساب "${name}"؟ لن يتمكن من تسجيل الدخول أو طلب خدمات.`,
+                icon: isBanned ? 'check-circle' : 'slash',
+                confirmColor: isBanned ? 'var(--success)' : 'var(--danger)',
+                onConfirm: async () => {
+                    const newStatus = isBanned ? 'نشط' : 'banned';
+                    if (api.updateClient) await api.updateClient(id, { status: newStatus });
+                    const c = currentData.clients.find(cl => cl.id == id);
+                    if (c) c.status = newStatus;
+                    PlatformActions.showToast(isBanned ? `تم تفعيل حساب "${name}"` : `تم حظر "${name}" بنجاح`, "warning");
+                    renderClientTable();
+                }
+            });
+        }
+
+        function confirmDeleteClient(id, name) {
+            openQuickActionModal({
+                title: 'حذف حساب الزبون',
+                desc: `سيتم مسح بيانات الزبون "${name}" نهائياً من المنصة.`,
+                icon: 'trash-2',
+                confirmColor: 'var(--danger)',
+                onConfirm: async () => {
+                    if (api.deleteClient) await api.deleteClient(id);
+                    currentData.clients = currentData.clients.filter(c => c.id != id);
+                    PlatformActions.showToast(`تم حذف حساب الزبون "${name}"`, "success");
+                    renderClientTable();
+                    renderDashboard();
+                }
+            });
+        }
+
+        // --- BOOKINGS & TRANSACTIONS CONTROLLER (NEW) ---
+        function renderBookingTable() {
+            const tbody = document.getElementById('bookingTableBody');
+            document.getElementById('bookingsTotalSummary').textContent = `إجمالي الطلبات: ${currentData.bookings.length}`;
+
+            if (currentData.bookings.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-secondary); padding: 30px;">لا توجد طلبات أو حجوزات مسجلة</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = currentData.bookings.map(b => {
+                let badgeClass = 'badge-pending';
+                let statusLabel = 'قيد الانتظار';
+                if (b.status === 'confirmed') { badgeClass = 'badge-active'; statusLabel = 'مؤكد'; }
+                else if (b.status === 'completed') { badgeClass = 'badge-completed'; statusLabel = 'مكتمل'; }
+                else if (b.status === 'cancelled') { badgeClass = 'badge-cancelled'; statusLabel = 'ملغى'; }
+
+                return `
+                <tr>
+                    <td><span style="font-weight:900; color:var(--text-secondary);">${b.id}</span></td>
+                    <td><strong>${b.client || 'عميل'}</strong></td>
+                    <td><span style="color:var(--accent); font-weight:800;">${b.artisan || 'حرفي'}</span></td>
+                    <td>${b.service || 'خدمة صيانة'}</td>
+                    <td>${b.date || 'اليوم'}</td>
+                    <td>${b.city || 'تارودانت'}</td>
+                    <td><span class="badge ${badgeClass}">${statusLabel}</span></td>
+                    <td>
+                        <div class="action-group">
+                            <button class="action-btn" title="تأكيد الحجز" style="color: var(--success);" onclick="updateBookingStatus('${b.id}', 'confirmed')">
+                                <i data-lucide="check" size="15"></i>
+                            </button>
+                            <button class="action-btn" title="تعليم كمكتمل" style="color: #3B82F6;" onclick="updateBookingStatus('${b.id}', 'completed')">
+                                <i data-lucide="award" size="15"></i>
+                            </button>
+                            <button class="action-btn" title="إلغاء الطلب" style="color: var(--warning);" onclick="updateBookingStatus('${b.id}', 'cancelled')">
+                                <i data-lucide="x" size="15"></i>
+                            </button>
+                            <button class="action-btn" title="حذف السجل" style="color: var(--danger);" onclick="deleteBookingRecord('${b.id}')">
+                                <i data-lucide="trash-2" size="15"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `}).join('');
+        }
+
+        function filterBookings() {
+            const status = document.getElementById('bookingStatusFilter').value.toLowerCase().trim();
+            const rows = document.querySelectorAll('#bookingTableBody tr');
+            rows.forEach(row => {
+                const rowStatus = row.children[6]?.innerText.toLowerCase() || '';
+                const matchStatus = !status || (
+                    (status === 'pending' && rowStatus.includes('انتظار')) ||
+                    (status === 'confirmed' && rowStatus.includes('مؤكد')) ||
+                    (status === 'completed' && rowStatus.includes('مكتمل')) ||
+                    (status === 'cancelled' && rowStatus.includes('ملغى'))
+                );
+                row.style.display = matchStatus ? '' : 'none';
+            });
+        }
+
+        async function updateBookingStatus(id, newStatus) {
+            if (api.updateBookingStatus) await api.updateBookingStatus(id, newStatus);
+            const b = currentData.bookings.find(item => item.id == id);
+            if (b) b.status = newStatus;
+            PlatformActions.showToast(`تم تحديث حالة الحجز إلى: ${newStatus}`, "info");
+            renderBookingTable();
+            renderDashboard();
+        }
+
+        function deleteBookingRecord(id) {
+            openQuickActionModal({
+                title: 'حذف سجل الحجز',
+                desc: `هل أنت متأكد من مسح حجز رقم (${id})؟ لا يمكن التراجع.`,
+                icon: 'trash-2',
+                confirmColor: 'var(--danger)',
+                onConfirm: async () => {
+                    if (api.deleteBooking) await api.deleteBooking(id);
+                    currentData.bookings = currentData.bookings.filter(b => b.id != id);
+                    PlatformActions.showToast(`تم حذف الحجز بنجاح`, "success");
+                    renderBookingTable();
+                    renderDashboard();
+                }
+            });
+        }
+
+        // --- VERIFICATION CENTER CONTROLLER ---
+        function renderVerificationTable() {
+            const tbody = document.getElementById('verificationTableBody');
+            const pending = currentData.artisans.filter(a => !a.verified);
+
+            if (pending.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-secondary); padding: 30px;"><i data-lucide="check-circle-2" style="color:var(--success); vertical-align:middle; margin-left:8px;"></i> لا توجد طلبات توثيق معلقة حالياً، جميع الحرفيين معتمدين!</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = pending.map(a => `
+                <tr>
+                    <td>
+                        <div class="user-cell">
+                            <div class="avatar" style="background: rgba(255,255,255,0.06); font-size: 0.75rem;">${a.name[0]}</div>
+                            <span style="font-weight: 800;">${a.name}</span>
+                        </div>
+                    </td>
+                    <td>${a.spec || a.category || 'عام'}</td>
+                    <td><span style="font-weight: 700;">بطاقة التعريف الوطنية (CNIE)</span></td>
+                    <td>2026-10-20</td>
+                    <td>
+                        <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.75rem;" onclick="openDocPreview('${a.id}', '${a.name}')">
+                            <i data-lucide="eye"></i> معاينة الوثيقة
+                        </button>
+                    </td>
+                    <td>
+                        <div class="action-group">
+                            <button class="action-btn approve" title="موافقة وتوثيق الحساب" style="color: var(--success);" onclick="approveVerification('${a.id}', '${a.name}')">
+                                <i data-lucide="check" size="18"></i>
+                            </button>
+                            <button class="action-btn reject" title="رفض الطلب" style="color: var(--danger);" onclick="rejectVerification('${a.id}', '${a.name}')">
+                                <i data-lucide="x" size="18"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function openDocPreview(artisanId, artisanName) {
+            document.getElementById('docArtisanName').textContent = `الحرفي: ${artisanName}`;
+            document.getElementById('docApproveBtn').onclick = () => {
+                approveVerification(artisanId, artisanName);
+                document.getElementById('docPreviewModal').style.display = 'none';
+            };
+            document.getElementById('docPreviewModal').style.display = 'flex';
+            lucide.createIcons();
+        }
+
+        async function approveVerification(id, name) {
+            if (api.updateArtisan) await api.updateArtisan(id, { verified: true, status: 'نشط' });
+            const a = currentData.artisans.find(art => art.id == id);
+            if (a) {
+                a.verified = true;
+                a.status = 'نشط';
+            }
+            await api.addActivity('shield-check', `تم اعتماد وتوثيق الحساب الرسمي لـ "${name}"`, 'الآن', '#10B981');
+            PlatformActions.showToast(`تهانينا! تم منح شارة التوثيق لـ "${name}" بنجاح`, "success");
+            renderTables('verification');
+            renderDashboard();
+        }
+
+        function rejectVerification(id, name) {
+            openQuickActionModal({
+                title: 'رفض طلب التوثيق',
+                desc: `هل أنت متأكد من رفض طلب توثيق "${name}"؟ يمكنك طلب إعادة رفع وثائق واضحة.`,
+                icon: 'x-circle',
+                confirmColor: 'var(--danger)',
+                onConfirm: async () => {
+                    await api.addActivity('alert-circle', `تم رفض طلب توثيق "${name}" لمراجعة الوثائق`, 'الآن', '#F59E0B');
+                    PlatformActions.showToast(`تم إشعار الحرفي "${name}" برفض الوثائق الحالية`, "warning");
+                    renderTables('verification');
+                    renderDashboard();
+                }
+            });
+        }
+
+        // --- INVENTORY & EQUIPMENT CONTROLLER ---
+        function renderInventoryTable() {
+            const tbody = document.getElementById('inventoryTableBody');
+            document.getElementById('inventoryCountText').textContent = `إجمالي المنتجات المسجلة في النظام: ${currentData.tools.length}`;
+
+            if (currentData.tools.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-secondary); padding: 30px;">المتجر فارغ، قم بإضافة أول منتج!</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = currentData.tools.map(t => {
+                const isLow = t.stock < 5;
+                const statusBadge = t.stock > 0 ? 
+                    (isLow ? '<span class="badge badge-pending">مخزون حرج</span>' : '<span class="badge badge-active">متوفر</span>') : 
+                    '<span class="badge badge-banned">نفذ المخزون</span>';
+
+                return `
+                <tr>
+                    <td>
+                        <div class="user-cell">
+                            <img src="${t.image || 'logo1.png'}" class="user-img" style="object-fit:cover; border-radius:10px; width:45px; height:45px;">
+                            <div>
+                                <div style="font-weight: 800;">${t.name}</div>
+                                <div style="font-size: 0.75rem; color: var(--text-secondary);">${t.category || 'عام'}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td><strong>${t.brand || 'عام'}</strong></td>
+                    <td style="color: var(--accent); font-weight: 900; font-size: 1.05rem;">${t.price} DH</td>
+                    <td>
+                        <div class="stock-control">
+                            <button class="stock-btn" title="إنقاص قطعة" onclick="adjustToolStock('${t.id}', -1)">-</button>
+                            <span style="font-weight:900; min-width: 28px; text-align: center; ${isLow ? 'color:var(--danger);' : ''}">${t.stock}</span>
+                            <button class="stock-btn" title="إضافة 10 قطع" onclick="adjustToolStock('${t.id}', 10)">+10</button>
+                        </div>
+                    </td>
+                    <td>${statusBadge}</td>
+                    <td>
+                        <div class="action-group">
+                            <button class="action-btn" title="تعديل المنتج" onclick="openEditToolModal('${t.id}')">
+                                <i data-lucide="edit-3" size="15"></i>
+                            </button>
+                            <button class="action-btn" title="حذف من المتجر" style="color: var(--danger);" onclick="confirmDeleteTool('${t.id}', '${t.name}')">
+                                <i data-lucide="trash-2" size="15"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `}).join('');
+        }
+
+        function filterTools() {
+            const cat = document.getElementById('toolCategoryFilter').value.toLowerCase().trim();
+            const rows = document.querySelectorAll('#inventoryTableBody tr');
+            rows.forEach(row => {
+                const rowCat = row.children[0]?.innerText.toLowerCase() || '';
+                row.style.display = (!cat || rowCat.includes(cat)) ? '' : 'none';
+            });
+        }
+
+        async function adjustToolStock(id, delta) {
+            const tool = currentData.tools.find(t => t.id == id);
+            if (!tool) return;
+            const newStock = Math.max(0, (Number(tool.stock) || 0) + delta);
+            tool.stock = newStock;
+            if (api.updateTool) await api.updateTool(id, { stock: newStock });
+            PlatformActions.showToast(`تم تحديث مخزون "${tool.name}" إلى: ${newStock}`, "info");
+            renderInventoryTable();
+            renderDashboard();
+        }
+
+        function openProductModal() {
+            currentEditingToolId = null;
+            document.getElementById('productForm').reset();
+            document.getElementById('productFormId').value = '';
+            document.getElementById('productModalHeading').textContent = 'إضافة منتج جديد للمتجر';
+            removeImage();
+            document.getElementById('productModal').style.display = 'flex';
+            lucide.createIcons();
+        }
+
+        function openEditToolModal(id) {
+            const tool = currentData.tools.find(t => t.id == id);
+            if (!tool) return;
+            currentEditingToolId = id;
+            document.getElementById('productFormId').value = id;
+            document.getElementById('productModalHeading').textContent = 'تعديل منتج في المتجر';
+            document.getElementById('toolName').value = tool.name;
+            document.getElementById('toolBrand').value = tool.brand || '';
+            document.getElementById('toolCategory').value = tool.category || 'power';
+            document.getElementById('toolPrice').value = tool.price;
+            document.getElementById('toolStock').value = tool.stock;
+            document.getElementById('toolDescription').value = tool.description || '';
+
+            if (tool.image) {
+                base64Image = tool.image;
+                document.getElementById('imagePreview').src = tool.image;
+                document.getElementById('previewContainer').style.display = 'block';
+                document.getElementById('uploadPlaceholder').style.display = 'none';
+            } else {
+                removeImage();
+            }
+
+            document.getElementById('productModal').style.display = 'flex';
+            lucide.createIcons();
+        }
+
+        function closeProductModal() {
+            document.getElementById('productModal').style.display = 'none';
+            document.getElementById('productForm').reset();
+            removeImage();
+        }
+
+        // Product Form Submit
+        document.getElementById('productForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+            
+            const payload = {
+                name: data.name.trim(),
+                brand: data.brand.trim(),
+                category: data.category,
+                categoryLabel: e.target.category.options[e.target.category.selectedIndex].text,
+                price: parseFloat(data.price),
+                stock: parseInt(data.stock),
+                description: data.description ? data.description.trim() : '',
+                image: base64Image || 'https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&q=80&w=200'
+            };
+
+            if (currentEditingToolId) {
+                // Update
+                if (api.updateTool) await api.updateTool(currentEditingToolId, payload);
+                const idx = currentData.tools.findIndex(t => t.id == currentEditingToolId);
+                if (idx !== -1) currentData.tools[idx] = { ...currentData.tools[idx], ...payload };
+                PlatformActions.showToast("تم تحديث بيانات المنتج بنجاح", "success");
+            } else {
+                // Add
+                const res = await api.addTool(payload);
+                const newTool = (res && res.data) ? res.data : { id: 't_' + Date.now(), ...payload };
+                currentData.tools.unshift(newTool);
+                PlatformActions.showToast("تمت إضافة المنتج الجديد إلى المتجر بنجاح", "success");
+            }
+
+            closeProductModal();
+            renderInventoryTable();
+            renderDashboard();
+        };
+
+        function confirmDeleteTool(id, name) {
+            openQuickActionModal({
+                title: 'حذف منتج من المتجر',
+                desc: `هل أنت متأكد من رغبتك في إزالة المنتج "${name}" من المتجر نهائياً؟`,
+                icon: 'trash-2',
+                confirmColor: 'var(--danger)',
+                onConfirm: async () => {
+                    await api.deleteTool(id);
+                    currentData.tools = currentData.tools.filter(t => t.id != id);
+                    PlatformActions.showToast(`تم حذف المنتج "${name}" بنجاح`, "success");
+                    renderInventoryTable();
+                    renderDashboard();
+                }
+            });
+        }
+
+        // --- NEWSLETTER LEADS CONTROLLER (NEW) ---
+        function renderNewsletterTable() {
+            const tbody = document.getElementById('newsletterTableBody');
+            document.getElementById('newsletterCount').textContent = `${currentData.newsletter.length} مشترك مسجل`;
+
+            if (currentData.newsletter.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-secondary); padding: 30px;">لم يتم تسجيل أي بريد في النشرة بعد</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = currentData.newsletter.map((n, idx) => `
+                <tr>
+                    <td><strong>${idx + 1}</strong></td>
+                    <td><span style="font-weight: 800; direction: ltr; display: inline-block;">${n.email}</span></td>
+                    <td>${n.date || 'اليوم'}</td>
+                    <td><span class="badge badge-active">نشط ومؤكد</span></td>
+                    <td>
+                        <button class="action-btn" title="حذف من القائمة" style="color: var(--danger);" onclick="deleteNewsletterLead('${n.email}')">
+                            <i data-lucide="trash-2" size="15"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function deleteNewsletterLead(email) {
+            currentData.newsletter = currentData.newsletter.filter(n => n.email !== email);
+            PlatformActions.showToast(`تم حذف البريد (${email}) من القائمة`, "info");
+            renderNewsletterTable();
+        }
+
+        function exportNewsletterCSV() {
+            if (currentData.newsletter.length === 0) {
+                PlatformActions.showToast("لا توجد بيانات لتصديرها", "warning");
+                return;
+            }
+
+            let csvContent = "data:text/csv;charset=utf-8,Email,Subscription_Date,Status\n";
+            currentData.newsletter.forEach(row => {
+                csvContent += `"${row.email}","${row.date || '2026-10-21'}","Active"\n`;
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `lharfa_newsletter_subscribers_${Date.now()}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            PlatformActions.showToast("تم تحميل قائمة المشتركين بنجاح!", "success");
+        }
+
+        // --- LIVE SEARCH FILTER ---
+        function filterAllTables(term) {
+            if (!term) {
+                document.querySelectorAll('.elite-table tbody tr').forEach(r => r.style.display = '');
+                return;
+            }
+            document.querySelectorAll('.elite-table tbody tr').forEach(row => {
+                const text = row.innerText.toLowerCase();
+                row.style.display = text.includes(term) ? '' : 'none';
+            });
+        }
+
+        // --- CHART JS ---
+        function initCharts() {
+            const ctx = document.getElementById('growthChart').getContext('2d');
+            const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+            gradient.addColorStop(0, 'rgba(255, 63, 0, 0.45)');
+            gradient.addColorStop(1, 'rgba(255, 63, 0, 0)');
+
+            if (growthChartInstance) growthChartInstance.destroy();
+
+            growthChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت', 'الأحد'],
+                    datasets: [{
+                        label: 'المعاملات اليومية (درهم)',
+                        data: [2800, 4200, 3900, 5600, 5100, 7800, 9400],
+                        borderColor: '#FF3F00',
+                        borderWidth: 4,
+                        fill: true,
+                        backgroundColor: gradient,
+                        tension: 0.4,
+                        pointBackgroundColor: '#FF3F00',
+                        pointBorderColor: '#fff',
+                        pointRadius: 5,
+                        pointHoverRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            ticks: { color: '#94A3B8', font: { family: 'Tajawal' } }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#94A3B8', font: { family: 'Tajawal' } }
+                        }
+                    }
+                }
+            });
+        }
+
+        // --- DYNAMIC CONFIRMATION MODAL HELPER ---
+        let currentModalConfirmCallback = null;
+
+        function openQuickActionModal({ title, desc, icon, confirmColor, onConfirm }) {
+            const modal = document.getElementById('quickModal');
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalDesc').textContent = desc;
+            
+            const iconContainer = document.getElementById('modalIcon');
+            iconContainer.innerHTML = `<i data-lucide="${icon || 'alert-triangle'}" size="40"></i>`;
+            
+            const btn = document.getElementById('confirmBtn');
+            btn.style.background = confirmColor || 'var(--accent)';
+            currentModalConfirmCallback = onConfirm;
+
+            modal.style.display = 'flex';
+            lucide.createIcons();
+        }
+
+        document.getElementById('confirmBtn').onclick = () => {
+            if (typeof currentModalConfirmCallback === 'function') {
+                currentModalConfirmCallback();
+            }
+            closeModal();
+        };
+
+        function closeModal() {
+            document.getElementById('quickModal').style.display = 'none';
+            currentModalConfirmCallback = null;
+        }
+
+        // --- IMAGE HANDLING HELPER ---
+        let base64Image = "";
+        const fileInput = document.getElementById('fileInput');
+        const imagePreview = document.getElementById('imagePreview');
+        const previewContainer = document.getElementById('previewContainer');
+        const uploadPlaceholder = document.getElementById('uploadPlaceholder');
+
+        if (fileInput) {
+            fileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        base64Image = event.target.result;
+                        imagePreview.src = base64Image;
+                        previewContainer.style.display = 'block';
+                        uploadPlaceholder.style.display = 'none';
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+
+        function removeImage() {
+            base64Image = "";
+            if (fileInput) fileInput.value = "";
+            if (previewContainer) previewContainer.style.display = 'none';
+            if (uploadPlaceholder) uploadPlaceholder.style.display = 'block';
+        }
+
+        // --- SETTINGS & BROADCAST MANAGER ---
+        function initSettingsForm() {
+            const saved = JSON.parse(localStorage.getItem('lharfa_admin_settings') || '{}');
+            if (saved.name) document.getElementById('platformName').value = saved.name;
+            if (saved.email) document.getElementById('platformEmail').value = saved.email;
+            if (saved.phone) document.getElementById('platformPhone').value = saved.phone;
+            if (saved.commission) document.getElementById('platformCommission').value = saved.commission;
+            if (saved.mode) document.getElementById('platformMode').value = saved.mode;
+            if (saved.currency) document.getElementById('platformCurrency').value = saved.currency;
+            
+            const toggle = document.getElementById('registrationToggle');
+            if (toggle) toggle.classList.toggle('is-on', saved.registrationOpen !== false);
+            updateSettingsStatus();
+        }
+
+        function updateSettingsStatus() {
+            const mode = document.getElementById('platformMode').value;
+            const pill = document.getElementById('settingsStatusPill');
+            const adminStatusText = document.getElementById('adminStatusText');
+            
+            const labels = {
+                live: 'النظام مباشر',
+                maintenance: 'وضع الصيانة مفعل',
+                private: 'وضع التطوير الداخلي'
+            };
+            pill.textContent = labels[mode] || labels.live;
+            if (adminStatusText) adminStatusText.textContent = labels[mode] || labels.live;
+        }
+
+        function toggleRegistrationSetting() {
+            document.getElementById('registrationToggle').classList.toggle('is-on');
+        }
+
+        function saveSettings() {
+            const settings = {
+                name: document.getElementById('platformName').value.trim(),
+                email: document.getElementById('platformEmail').value.trim(),
+                phone: document.getElementById('platformPhone').value.trim(),
+                commission: document.getElementById('platformCommission').value,
+                mode: document.getElementById('platformMode').value,
+                currency: document.getElementById('platformCurrency').value,
+                registrationOpen: document.getElementById('registrationToggle').classList.contains('is-on'),
+                updatedAt: new Date().toISOString()
+            };
+
+            localStorage.setItem('lharfa_admin_settings', JSON.stringify(settings));
+            updateSettingsStatus();
+            PlatformActions.showToast("تم حفظ كافة إعدادات المنصة بنجاح!", "success");
+        }
+
+        function resetSettingsForm() {
+            localStorage.removeItem('lharfa_admin_settings');
+            document.getElementById('platformName').value = 'lharfa.ma';
+            document.getElementById('platformEmail').value = 'adminlharfa@gmail.com';
+            document.getElementById('platformPhone').value = '+212 783-086770';
+            document.getElementById('platformCommission').value = '15';
+            document.getElementById('platformMode').value = 'live';
+            document.getElementById('platformCurrency').value = 'MAD';
+            document.getElementById('registrationToggle').classList.add('is-on');
+            updateSettingsStatus();
+            PlatformActions.showToast("تم استرجاع الإعدادات الافتراضية", "info");
+        }
+
+        function broadcastAnnouncement() {
+            const msg = document.getElementById('broadcastMsg').value.trim();
+            if (!msg) {
+                PlatformActions.showToast("المرجو كتابة نص الإشعار أولاً", "warning");
+                return;
+            }
+
+            const broadcastData = {
+                text: msg,
+                active: true,
+                time: new Date().toISOString()
+            };
+
+            localStorage.setItem('lharfa_broadcast_announcement', JSON.stringify(broadcastData));
+            checkActiveBroadcast();
+            PlatformActions.showToast("تم بث الإشعار بنجاح في المنصة!", "success");
+        }
+
+        function clearBroadcastAnnouncement() {
+            localStorage.removeItem('lharfa_broadcast_announcement');
+            checkActiveBroadcast();
+            PlatformActions.showToast("تم إلغاء بث الإشعار من المنصة", "info");
+        }
+
+        function checkActiveBroadcast() {
+            const container = document.getElementById('broadcastBannerArea');
+            const data = JSON.parse(localStorage.getItem('lharfa_broadcast_announcement') || 'null');
+            if (data && data.active && data.text) {
+                container.innerHTML = `
+                    <div class="broadcast-banner-active">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <i data-lucide="megaphone" style="color: var(--accent);"></i>
+                            <span style="font-weight: 800; font-size: 0.95rem;">إشعار عام مباشر: ${data.text}</span>
+                        </div>
+                        <button class="action-btn" title="إلغاء الإشعار" onclick="clearBroadcastAnnouncement()"><i data-lucide="x"></i></button>
+                    </div>
+                `;
+                lucide.createIcons();
+            } else {
+                container.innerHTML = '';
+            }
+        }
+
+        function toggleQuickMenu(e) {
+            e.stopPropagation();
+            document.getElementById('quickActionDropdown').classList.toggle('show');
+        }
+
+        function toggleAdminLangDropdown(e) {
+            if (window.I18nManager && typeof window.I18nManager.toggleLanguageDropdown === 'function') {
+                window.I18nManager.toggleLanguageDropdown(e);
+            } else {
+                e.stopPropagation();
+                const switcher = e.currentTarget ? e.currentTarget.closest('.dashboard-lang-switcher') : null;
+                const dd = document.getElementById('adminLangDropdown');
+                if (dd) dd.classList.toggle('show');
+                if (switcher) switcher.classList.toggle('open');
+            }
+        }
+
+        function switchPlatformLang(lang) {
+            if (window.I18nManager && typeof window.I18nManager.setLanguage === 'function') {
+                window.I18nManager.setLanguage(lang);
+            } else {
+                localStorage.setItem('albane_lang', lang);
+                window.location.reload();
+            }
+        }
+
+        window.addEventListener('click', (e) => {
+            const dd = document.getElementById('adminLangDropdown');
+            if (dd && !e.target.closest('.dashboard-lang-switcher')) {
+                dd.classList.remove('show');
+                const switcher = dd.closest('.dashboard-lang-switcher');
+                if (switcher) switcher.classList.remove('open');
+            }
+        });
+
+        function logout() {
+            localStorage.removeItem('albane_token');
+            localStorage.removeItem('albane_user');
+            window.location.href = 'login.html';
+        }
+    </script>
+    <script src="platform-actions.js"></script>
+</body>
+</html>

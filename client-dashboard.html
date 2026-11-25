@@ -1,0 +1,1738 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="client_dashboard_title">لوحة تحكم الزبون | lharfa.ma</title>
+    <link rel="icon" type="image/jpeg" href="logo1.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/lucide@0.344.0"></script>
+    <link rel="stylesheet" href="styles.css">
+    <script src="translations.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js?v=20261125"></script>
+
+    <script src="api.js?v=20261125" defer></script>
+    <script src="i18n-manager.js"></script>
+    <script src="dashboard-common.js" defer></script>
+    <style>
+        /* ELITE CLIENT DASHBOARD DESIGN SYSTEM - PREMIUM DARK MODE */
+        :root {
+            --primary-orange: #FF3F00;
+            --primary-orange-light: rgba(255, 63, 0, 0.1);
+            --bg-dark: #020617;
+            --card-bg: rgba(15, 23, 42, 0.6);
+            --border-color: rgba(255, 255, 255, 0.05);
+            --text-muted: #94A3B8;
+            --success-green: #10B981;
+            --shadow-premium: 0 20px 40px rgba(0, 0, 0, 0.2);
+            --transition-base: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --sidebar-width: 280px;
+        }
+
+        body {
+            background: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Tajawal', sans-serif;
+            margin: 0;
+            overflow-x: hidden;
+            height: 100vh;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at 0% 0%, rgba(255, 63, 0, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 100% 100%, rgba(255, 63, 0, 0.02) 0%, transparent 50%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .dashboard-body-wrapper {
+            height: 100vh;
+            display: flex;
+            position: relative;
+        }
+
+        /* --- PREMIUM SCROLLBAR --- */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        
+        /* --- ELITE CLIENT TOPBAR & UX ENHANCEMENTS --- */
+        .client-topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 26px;
+            margin-bottom: 30px;
+            background: rgba(15, 23, 42, 0.55);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 26px;
+            gap: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .client-topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .client-topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .topbar-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 100px;
+            font-size: 13px;
+            font-weight: 800;
+            background: rgba(16, 185, 129, 0.12);
+            color: #10B981;
+            border: 1px solid rgba(16, 185, 129, 0.25);
+        }
+
+        .topbar-badge i {
+            width: 15px;
+            height: 15px;
+        }
+
+        .topbar-action-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 18px;
+            border-radius: 15px;
+            font-size: 13.5px;
+            font-weight: 800;
+            background: rgba(255, 255, 255, 0.04);
+            color: #F8FAFC;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            text-decoration: none;
+            transition: var(--transition-base);
+        }
+
+        .topbar-action-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+            color: white;
+        }
+
+        .topbar-action-btn i {
+            width: 16px;
+            height: 16px;
+            color: var(--primary-orange);
+        }
+
+        .dashboard-lang-switcher {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dashboard-lang-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 16px;
+            border-radius: 15px;
+            background: rgba(255, 63, 0, 0.1);
+            border: 1px solid rgba(255, 63, 0, 0.25);
+            color: var(--primary-orange);
+            font-weight: 900;
+            font-size: 13px;
+            cursor: pointer;
+            transition: var(--transition-base);
+        }
+
+        .dashboard-lang-btn:hover {
+            background: var(--primary-orange);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 63, 0, 0.35);
+        }
+
+        .dashboard-lang-btn i {
+            width: 15px;
+            height: 15px;
+        }
+
+        .dashboard-lang-dropdown {
+            position: absolute;
+            top: calc(100% + 8px);
+            inset-inline-end: 0;
+            background: rgba(15, 23, 42, 0.96);
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 18px;
+            padding: 8px;
+            min-width: 175px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.45);
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+            z-index: 1000;
+        }
+
+        .dashboard-lang-dropdown.show {
+            display: flex;
+        }
+
+        .dashboard-lang-dropdown a {
+            padding: 9px 14px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 800;
+            border-radius: 12px;
+            transition: var(--transition-base);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .dashboard-lang-dropdown a:hover,
+        .dashboard-lang-dropdown a.active {
+            color: white;
+            background: rgba(255, 63, 0, 0.15);
+        }
+
+        .dashboard-lang-dropdown a.active .lang-check {
+            opacity: 1 !important;
+            stroke: #FF5500 !important;
+        }
+
+        .dashboard-lang-switcher.open .dashboard-lang-btn i:last-child {
+            transform: rotate(180deg);
+        }
+
+        /* --- ELITE SIDEBAR --- */
+        .client-sidebar {
+            width: var(--sidebar-width);
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(20px);
+            border-inline-end: 1px solid var(--border-color);
+            color: var(--text-muted);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            flex-shrink: 0;
+            z-index: 1000;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sidebar-brand {
+            padding: 40px 30px;
+            font-size: 28px;
+            font-weight: 950;
+            color: white;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            
+        }
+
+        .nav-list-premium {
+            flex: 1;
+            padding: 10px 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .nav-link-premium {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 14px 20px;
+            border-radius: 18px;
+            color: var(--text-muted);
+            font-weight: 700;
+            text-decoration: none;
+            transition: var(--transition-base);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-link-premium:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-link-premium.active {
+            background: linear-gradient(90deg, rgba(255, 63, 0, 0.1) 0%, transparent 100%);
+            color: var(--primary-orange);
+            border-inline-start: 4px solid var(--primary-orange);
+            font-weight: 900;
+        }
+
+        .nav-link-premium i {
+            transition: var(--transition-base);
+        }
+
+        .nav-link-premium.active i {
+            transform: scale(1.1);
+        }
+
+        /* --- CONTENT AREA --- */
+        .client-main {
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+            background: transparent;
+            position: relative;
+        }
+
+        /* --- MOBILE HAMBURGER --- */
+        .mobile-nav-toggle {
+            display: none;
+            position: fixed;
+            top: 25px;
+            right: 25px;
+            width: 65px;
+            height: 65px;
+            background: var(--primary-orange);
+            color: white;
+            border-radius: 22px;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            cursor: pointer;
+            box-shadow: 0 15px 35px rgba(255, 63, 0, 0.4);
+            border: none;
+            font-size: 24px;
+        }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(2, 6, 23, 0.7);
+            backdrop-filter: blur(5px);
+            z-index: 900;
+            opacity: 0;
+            transition: 0.3s;
+        }
+
+        /* --- HERO BANNER --- */
+        .hero-banner-premium {
+            background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+            border-radius: 40px;
+            padding: 50px;
+            color: white;
+            margin-bottom: 40px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .hero-banner-premium::before {
+            content: '';
+            position: absolute;
+            top: -100px;
+            right: -100px;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, var(--primary-orange) 0%, transparent 70%);
+            opacity: 0.15;
+            filter: blur(80px);
+        }
+
+        /* --- STAT CARDS --- */
+        .stat-grid-premium {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card-v3 {
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+            padding: 35px;
+            border-radius: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: var(--transition-base);
+        }
+
+        .stat-card-v3:hover {
+            transform: translateY(-5px);
+            background: rgba(15, 23, 42, 0.6);
+        }
+
+        .stat-icon-v3 {
+            width: 70px;
+            height: 70px;
+            border-radius: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            background: rgba(255, 63, 0, 0.1);
+            color: var(--primary-orange);
+        }
+
+        .stat-val {
+            font-size: 32px;
+            font-weight: 950;
+            color: white;
+            line-height: 1;
+        }
+
+        .stat-label {
+            color: var(--text-muted);
+            font-weight: 800;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .hero-card-v3 {
+            padding: 60px;
+            margin-bottom: 40px;
+        }
+
+        .hero-text-container {
+            min-width: 300px;
+        }
+
+        .tab-section {
+            display: none;
+            width: 100%;
+            animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .tab-section.active {
+            display: block;
+        }
+
+        @keyframes slideUpFade {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* --- ELITE BOOKING CARDS --- */
+        .booking-card-premium {
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 35px;
+            padding: 30px;
+            margin-bottom: 25px;
+            transition: var(--transition-base);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        }
+
+        .booking-card-premium:hover {
+            transform: translateY(-5px);
+            background: rgba(15, 23, 42, 0.6);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+        }
+
+        .status-badge-elite {
+            padding: 8px 18px;
+            border-radius: 14px;
+            font-weight: 900;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-transform: uppercase;
+            
+        }
+
+        /* --- MESSENGER REBORN --- */
+        .premium-messenger {
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(40px);
+            border-radius: 35px;
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            height: calc(100vh - 150px);
+            position: relative;
+        }
+
+        .ms-sidebar {
+            background: rgba(15, 23, 42, 0.2);
+            border-inline-end: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .ms-chat {
+            display: flex;
+            flex-direction: column;
+            background: rgba(2, 6, 23, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chat-list-item {
+            padding: 20px 25px;
+            display: flex;
+            gap: 15px;
+            cursor: pointer;
+            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+            position: relative;
+        }
+
+        .chat-list-item:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .chat-list-item.active {
+            background: rgba(255, 63, 0, 0.08);
+        }
+
+        .chat-list-item.active::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 15%;
+            height: 70%;
+            width: 4px;
+            background: var(--primary-orange);
+            border-radius: 0 4px 4px 0;
+            box-shadow: 0 0 15px var(--primary-orange);
+        }
+
+        .chat-bubble {
+            padding: 14px 18px;
+            border-radius: 20px;
+            font-weight: 600;
+            max-width: 75%;
+            line-height: 1.6;
+            position: relative;
+            font-size: 14.5px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            animation: bubbleAppear 0.3s ease-out;
+        }
+
+        @keyframes bubbleAppear {
+            from { opacity: 0; transform: translateY(10px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* In RTL: bubble-out (Sent) is on LEFT, bubble-in (Received) is on RIGHT */
+        .bubble-in {
+            background: rgba(255, 255, 255, 0.06);
+            color: #F1F5F9;
+            border-bottom-right-radius: 4px;
+            align-self: flex-start;
+            margin-inline-end: auto;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .bubble-out {
+            background: linear-gradient(135deg, var(--primary-orange), #FF5722);
+            color: white;
+            border-bottom-left-radius: 4px;
+            align-self: flex-end;
+            margin-inline-start: auto;
+            box-shadow: 0 8px 25px rgba(255, 63, 0, 0.2);
+        }
+
+        .chat-time {
+            font-size: 10px;
+            opacity: 0.6;
+            margin-top: 6px;
+            display: block;
+            font-weight: 800;
+        }
+
+        .bubble-out .chat-time {
+            color: rgba(255, 255, 255, 0.9);
+            text-align: left;
+        }
+        
+        .bubble-in .chat-time {
+            text-align: right;
+        }
+
+        @media (max-width: 1024px) {
+            .premium-messenger {
+                grid-template-columns: 1fr;
+                height: calc(100vh - 100px);
+                border-radius: 0;
+                margin: -15px;
+                width: calc(100% + 30px);
+            }
+
+            .ms-sidebar {
+                display: flex;
+            }
+
+            .ms-chat {
+                display: none;
+                position: absolute;
+                inset: 0;
+                background: #0B1120;
+                z-index: 100;
+            }
+
+            .mobile-back-btn {
+                display: flex !important;
+            }
+            
+            .premium-messenger.show-chat .ms-chat {
+                display: flex;
+            }
+        }
+
+        /* --- GALLERY STYLES --- */
+        .gallery-item-v3:hover .gallery-overlay {
+            opacity: 1 !important;
+            transform: translateY(0);
+        }
+
+        .gallery-item-v3 img {
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .gallery-item-v3:hover img {
+            transform: scale(1.1);
+        }
+
+        /* --- RESPONSIVE BREAKPOINTS --- */
+        @media (max-width: 1024px) {
+            .client-sidebar {
+                position: fixed;
+                right: -100%;
+                top: 0;
+                transform: translateX(100%);
+                width: 300px;
+                box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
+                z-index: 9999;
+                height: 100vh;
+                background: rgba(15, 23, 42, 0.95);
+            }
+
+            .client-sidebar.active {
+                right: 0;
+                transform: translateX(0);
+            }
+
+            .mobile-nav-toggle {
+                display: flex !important;
+                position: fixed !important;
+                top: 20px !important;
+                right: 20px !important;
+                width: 60px !important;
+                height: 60px !important;
+                background: var(--primary-orange) !important;
+                color: white !important;
+                border-radius: 20px !important;
+                z-index: 10000 !important;
+                box-shadow: 0 10px 30px rgba(255, 63, 0, 0.5) !important;
+                border: none !important;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .sidebar-overlay.active {
+                display: block;
+                opacity: 1;
+                pointer-events: auto;
+            }
+
+            .client-main {
+                padding: 15px !important;
+                padding-top: 100px !important;
+                width: 100% !important;
+            }
+
+            .client-sidebar .sidebar-brand {
+                padding-top: 80px !important;
+                padding-right: 20px !important;
+            }
+
+            /* --- MESSENGER MOBILE ELITE --- */
+            .premium-messenger {
+                display: block !important;
+                height: calc(100vh - 120px) !important;
+                border-radius: 25px;
+                position: relative;
+                margin: 0;
+                width: 100%;
+            }
+
+            .ms-sidebar {
+                display: block !important;
+                width: 100% !important;
+                height: 100% !important;
+                border-inline-end: none !important;
+            }
+
+            .ms-chat {
+                display: none !important;
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                z-index: 100;
+                background: #0B1120;
+            }
+
+            .premium-messenger.show-chat .ms-sidebar {
+                display: none !important;
+            }
+
+            .premium-messenger.show-chat .ms-chat {
+                display: flex !important;
+            }
+
+            .mobile-back-btn {
+                display: flex !important;
+                margin-inline-end: 10px;
+            }
+
+            #chatBody {
+                padding: 20px !important;
+            }
+
+            #chatHeader {
+                padding: 10px 15px !important;
+            }
+
+            .chat-bubble {
+                max-width: 90% !important;
+                padding: 12px 16px !important;
+                font-size: 14px !important;
+            }
+        }
+
+
+    </style>
+    <style>
+        /* ADDING ELITE COMPONENTS NOT YET DEFINED */
+        .glass-card-v3 {
+            background: var(--card-bg);
+            backdrop-filter: blur(25px);
+            border: 1px solid var(--border-color);
+            border-radius: 32px;
+            padding: 35px;
+            box-shadow: var(--shadow-premium);
+        }
+
+        .premium-input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            border-radius: 15px;
+            padding: 18px 25px;
+            color: white;
+            font-weight: 700;
+            transition: 0.3s;
+            margin-top: 10px;
+            font-size: 16px;
+        }
+
+        .premium-input:focus {
+            border-color: var(--primary-orange);
+            background: rgba(255, 255, 255, 0.05);
+            outline: none;
+        }
+
+        .form-label {
+            font-weight: 950;
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+            display: block;
+            padding-right: 5px;
+        }
+
+        .btn-premium {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 15px 35px;
+            border-radius: 22px;
+            font-weight: 900;
+            font-size: 16px;
+            transition: var(--transition-base);
+            cursor: pointer;
+            border: none;
+            text-decoration: none;
+        }
+
+        .btn-indigo {
+            background: linear-gradient(135deg, var(--primary-orange), #CC3D00);
+            color: white;
+            box-shadow: 0 10px 30px rgba(255, 63, 0, 0.3);
+        }
+
+        .btn-indigo:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(255, 63, 0, 0.4);
+        }
+
+        .btn-outline-premium {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: white;
+        }
+
+        .btn-outline-premium:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: white;
+        }
+
+        /* --- MOBILE TOGGLE ELITE --- */
+        .mobile-nav-toggle {
+            display: none;
+            position: fixed;
+            top: 25px;
+            right: 25px;
+            width: 55px;
+            height: 55px;
+            background: #FF3F00;
+            color: white;
+            border-radius: 16px;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(255, 0, 0, 0.4);
+            border: none;
+            font-size: 22px;
+            transition: 0.3s;
+        }
+        .mobile-nav-toggle:active { transform: scale(0.9); }
+    </style>
+    <link rel="stylesheet" href="mobile.css">
+    <button class="mobile-nav-toggle" onclick="toggleSidebar()">
+        <i data-lucide="menu"></i>
+    </button>
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+    <div class="dashboard-body-wrapper">
+        <!-- Sidebar Navigation -->
+        <aside class="client-sidebar">
+            <div class="sidebar-brand" style="padding: 30px 25px; margin-bottom: 20px;">
+                <a href="index.html" class="logo" style="text-decoration: none; color: #FF3F00; display: flex; align-items: center; gap: 12px; direction: ltr; font-weight: 950; font-size: 28px;">
+                    <img src="logo1.png" alt="lharfa.ma Logo" style="height: 40px; width: auto; border-radius: 8px;">
+                    <span>lharfa<span style="color: white;">.ma</span></span>
+                </a>
+            </div>
+
+            <nav class="nav-list-premium">
+                <div class="nav-link-premium active" onclick="switchDashboardTab('overview', this)">
+                    <i data-lucide="layout-grid"></i> <span data-i18n="dashboard_overview">الرئيسية</span>
+                </div>
+                <div class="nav-link-premium" onclick="switchDashboardTab('orders', this)">
+                    <i data-lucide="clipboard-list"></i> <span data-i18n="dashboard_orders">طلبات الحجز</span>
+                </div>
+                <div class="nav-link-premium" onclick="switchDashboardTab('messages', this)">
+                    <i data-lucide="message-circle"></i> <span data-i18n="dashboard_messages">الرسائل</span>
+                </div>
+                <div class="nav-link-premium" onclick="switchDashboardTab('profile', this)">
+                    <i data-lucide="user"></i> <span data-i18n="dashboard_profile">معلوماتك الشخصية</span>
+                </div>
+
+                <div class="nav-link-premium" onclick="window.location.href='artisans.html'"
+                    style="border-top: 1px solid rgba(255,255,255,0.05); margin-top: 10px; padding-top: 20px;">
+                    <i data-lucide="search"></i> <span data-i18n="find_new_artisan">ابحث عن حرفي</span>
+                </div>
+            </nav>
+
+            <div style="padding: 20px 15px; border-top: 1px solid rgba(255,255,255,0.05);">
+                <div class="nav-link-premium" style="color: #ef4444;" onclick="logout()">
+                    <i data-lucide="log-out"></i> <span data-i18n="logout">خروج</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="client-main">
+            <!-- Client Topbar (Search, Lang Switcher, Live Badge) -->
+            <header class="client-topbar">
+                <div class="client-topbar-left">
+                    <span class="topbar-badge">
+                        <i data-lucide="shield-check"></i>
+                        <span data-i18n="client_member">عضو موثوق في المنصة</span>
+                    </span>
+                    <a href="artisans.html" class="topbar-action-btn">
+                        <i data-lucide="search"></i>
+                        <span data-i18n="find_new_artisan">تصفح الحرفيين</span>
+                    </a>
+                </div>
+                <div class="client-topbar-right">
+                    <div class="dashboard-lang-switcher">
+                        <button class="dashboard-lang-btn" onclick="toggleClientLangDropdown(event)" aria-label="Change Language">
+                            <i data-lucide="globe"></i>
+                            <span id="currentClientLangLabel">AR</span>
+                            <i data-lucide="chevron-down" style="width: 13px; height: 13px;"></i>
+                        </button>
+                        <div id="clientLangDropdown" class="dashboard-lang-dropdown">
+                            <div class="lang-dropdown-header" style="padding: 4px 8px 6px; font-size: 10px; font-weight: 800; color: #94A3B8; border-bottom: 1px solid rgba(255, 255, 255, 0.08); margin-bottom: 4px;">
+                                <span data-i18n="switch_lang">تغيير اللغة</span>
+                            </div>
+                            <a href="#" class="lang-option" data-lang-option="ar" onclick="switchPlatformLang('ar'); return false;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span class="lang-flag" style="font-size: 15px;">🇲🇦</span>
+                                    <span>العربية</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <span class="lang-badge" style="font-size: 10px; opacity: 0.6;">AR</span>
+                                    <i data-lucide="check" class="lang-check" style="width: 13px; height: 13px; opacity: 0;"></i>
+                                </div>
+                            </a>
+                            <a href="#" class="lang-option" data-lang-option="fr" onclick="switchPlatformLang('fr'); return false;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span class="lang-flag" style="font-size: 15px;">🇫🇷</span>
+                                    <span>Français</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <span class="lang-badge" style="font-size: 10px; opacity: 0.6;">FR</span>
+                                    <i data-lucide="check" class="lang-check" style="width: 13px; height: 13px; opacity: 0;"></i>
+                                </div>
+                            </a>
+                            <a href="#" class="lang-option" data-lang-option="en" onclick="switchPlatformLang('en'); return false;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span class="lang-flag" style="font-size: 15px;">🇬🇧</span>
+                                    <span>English</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <span class="lang-badge" style="font-size: 10px; opacity: 0.6;">EN</span>
+                                    <i data-lucide="check" class="lang-check" style="width: 13px; height: 13px; opacity: 0;"></i>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                    <button class="topbar-action-btn" onclick="logout()" title="تسجيل الخروج" style="color: #F87171; border-color: rgba(239, 68, 68, 0.2);">
+                        <i data-lucide="log-out" style="color: #EF4444;"></i>
+                        <span data-i18n="logout">خروج</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Overview Tab -->
+            <section id="tab-overview" class="tab-section active">
+                <div class="glass-card-v3 hero-card-v3"
+                    style="background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(2, 6, 23, 1) 100%); position: relative; overflow: hidden; border: 1px solid rgba(255, 63, 0, 0.15); border-radius: 45px; box-shadow: 0 30px 60px rgba(0,0,0,0.4);">
+                    
+                    <!-- Decorative Elements -->
+                    <div style="position: absolute; top: -100px; right: -100px; width: 350px; height: 350px; background: radial-gradient(circle, rgba(255, 63, 0, 0.1) 0%, transparent 70%); filter: blur(60px);"></div>
+                    <div style="position: absolute; bottom: -50px; left: -50px; width: 200px; height: 200px; background: radial-gradient(circle, rgba(59, 130, 246, 0.05) 0%, transparent 70%); filter: blur(40px);"></div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 40px; position: relative; z-index: 5;">
+                        <div class="hero-text-container" style="flex: 1;">
+
+                            <h1 style="font-size: 56px; font-weight: 950; margin-bottom: 20px;  color: white; line-height: 1.1;">
+                                <span data-i18n="welcome_back">مرحباً بعودتك</span>،<br>
+                                <span id="clientName" style="background: linear-gradient(to left, #FF3F00, #FF4D4D); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">الزبون</span>
+                            </h1>
+                            <p style="font-size: 20px; color: var(--text-muted); font-weight: 700; max-width: 550px; line-height: 1.6;"
+                                data-i18n="client_tagline">تتبع حجوزاتك وتواصل مع حرفييك المفضلين بكل سهولة وأمان مع lharfa.ma.</p>
+                        </div>
+                        <div style="flex-shrink: 0;">
+                            <a href="artisans.html" class="btn-premium btn-indigo"
+                                style="height: 80px; padding: 0 50px; font-size: 19px; border-radius: 25px; box-shadow: 0 20px 40px rgba(255, 63, 0, 0.3);">
+                                <i data-lucide="search" style="width: 24px;"></i> <span data-i18n="find_new_artisan">ابحث عن حرفي دابا</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="stat-grid-premium">
+                    <div class="stat-card-v3" style="border-inline-start: 5px solid #3B82F6; background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(15, 23, 42, 0.4) 100%);">
+                        <div class="stat-icon-v3" style="background: rgba(59, 130, 246, 0.1); color: #3B82F6; box-shadow: 0 10px 20px rgba(59, 130, 246, 0.1);">
+                            <i data-lucide="calendar-check"></i>
+                        </div>
+                        <div>
+                            <p class="stat-label" data-i18n="active_bookings">حجوزات جارية</p>
+                            <h3 class="stat-val" id="clientActiveBookingsCount">0</h3>
+                        </div>
+                    </div>
+                    <div class="stat-card-v3" style="border-inline-start: 5px solid #10B981; background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(15, 23, 42, 0.4) 100%);">
+                        <div class="stat-icon-v3" style="background: rgba(16, 185, 129, 0.1); color: #10B981; box-shadow: 0 10px 20px rgba(16, 185, 129, 0.1);">
+                            <i data-lucide="mail"></i>
+                        </div>
+                        <div>
+                            <p class="stat-label" data-i18n="unread_msg">رسائل جديدة</p>
+                            <h3 class="stat-val" id="clientUnreadMessagesCount">0</h3>
+                        </div>
+                    </div>
+                    <div class="stat-card-v3" style="border-inline-start: 5px solid #F59E0B; background: linear-gradient(135deg, rgba(245, 158, 11, 0.05) 0%, rgba(15, 23, 42, 0.4) 100%);">
+                        <div class="stat-icon-v3" style="background: rgba(245, 158, 11, 0.1); color: #F59E0B; box-shadow: 0 10px 20px rgba(245, 158, 11, 0.1);">
+                            <i data-lucide="award"></i>
+                        </div>
+                        <div>
+                            <p class="stat-label" data-i18n="my_reviews">تقييماتي</p>
+                            <h3 class="stat-val" id="clientReviewsCount">0</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 50px;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                        <h3 style="font-weight: 950; font-size: 26px;" data-i18n="recent_activity">آخر الحجوزات</h3>
+                        <a href="#" style="color: var(--primary-orange); font-weight: 900; text-decoration: none;"
+                            onclick="switchDashboardTab('orders')" data-i18n="view_all">شوف كلشي ←</a>
+                    </div>
+                    <div id="overviewBookingList">
+                        <!-- Preview of bookings injected by JS -->
+                    </div>
+                </div>
+
+                <!-- Recent Messages Preview -->
+                <div style="margin-top: 50px; margin-bottom: 50px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                        <h3 style="font-weight: 950; font-size: 26px; display: inline-flex; align-items: center; gap: 8px;" data-i18n="latest_messages">أحدث الرسائل <i data-lucide="message-square" size="22"></i></h3>
+                        <a href="#" style="color: var(--primary-orange); font-weight: 900; text-decoration: none;"
+                            onclick="switchDashboardTab('messages')" data-i18n="view_all">شوف كلشي ←</a>
+                    </div>
+                    <div id="overviewMessageList" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                        <!-- Message previews injected by JS -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Orders Tab -->
+            <section id="tab-orders" class="tab-section">
+                <div
+                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 45px; flex-wrap: wrap; gap: 20px;">
+                    <h2 style="font-weight: 950; font-size: 36px; color: white; display: inline-flex; align-items: center; gap: 10px;"
+                        data-i18n="my_bookings">إدارة الحجوزات <i data-lucide="clipboard-list" size="30"></i></h2>
+                    <div
+                        style="display: flex; gap: 10px; background: rgba(255,255,255,0.03); padding: 6px; border-radius: 100px; border: 1px solid var(--border-color); width: fit-content;">
+                        <button class="btn-tab-filter active" onclick="filterBookings('all', this)" data-i18n="all">الكل</button>
+                        <button class="btn-tab-filter" onclick="filterBookings('accepted', this)" data-i18n="accepted">مقبولة</button>
+                        <button class="btn-tab-filter" onclick="filterBookings('completed', this)" data-i18n="completed">مكتملة</button>
+                    </div>
+                </div>
+                <style>
+                    .btn-tab-filter {
+                        background: transparent;
+                        color: var(--text-muted);
+                        border: none;
+                        padding: 10px 22px;
+                        border-radius: 100px;
+                        font-weight: 900;
+                        font-size: 14px;
+                        cursor: pointer;
+                        transition: 0.3s;
+                    }
+                    .btn-tab-filter.active {
+                        background: #FF3F00;
+                        color: white;
+                        box-shadow: 0 8px 15px rgba(255, 0, 0, 0.2);
+                    }
+                </style>
+                <div id="fullBookingList" style="display: flex; flex-direction: column; gap: 20px;">
+                    <!-- Full list injected by JS -->
+                </div>
+            </section>
+
+            <!-- Messages Tab -->
+            <section id="tab-messages" class="tab-section">
+                <div class="premium-messenger glass-card-v3" style="padding: 0;">
+                    <div class="ms-sidebar"
+                        style="background: rgba(15, 23, 42, 0.4); border-inline-end: 1px solid var(--border-color); display: flex; flex-direction: column;">
+                        <div style="padding: 30px; border-bottom: 1px solid var(--border-color);">
+                            <h3 style="font-weight: 950; margin: 0; color: white; display: inline-flex; align-items: center; gap: 8px;" data-i18n="messages_title">الرسائل <i data-lucide="message-square" size="20"></i></h3>
+                        </div>
+                        <div id="clientChatList" style="flex: 1; overflow-y: auto;">
+                            <!-- Chats injected by JS -->
+                        </div>
+                    </div>
+                    <div class="ms-chat"
+                        style="display: flex; flex-direction: column; background: transparent; position: relative;">
+                        <div id="chatHeader"
+                            style="padding: 20px 25px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: space-between; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(10px); gap: 15px; flex-wrap: nowrap;">
+                            <button class="btn-premium btn-outline-premium"
+                                style="border-radius: 10px; padding: 8px 16px; font-size: 12px; flex-shrink: 0; white-space: nowrap; display: flex; align-items: center; gap: 6px;"
+                                onclick="handleQuickCall()">
+                                <i data-lucide="phone" style="width: 14px; height: 14px;"></i> <span
+                                    data-i18n="quick_call">اتصال</span>
+                            </button>
+                            <div style="display: flex; align-items: center; flex: 1; min-width: 0; justify-content: flex-end; gap: 12px;">
+                                <div style="text-align: right; min-width: 0; display: flex; flex-direction: column; justify-content: center;">
+                                    <h4 id="chatName"
+                                        style="font-weight: 950; font-size: 16px; margin: 0; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                        -</h4>
+                                    <p
+                                        style="font-size: 11px; color: var(--success-green); font-weight: 900; margin: 2px 0 0 0; opacity: 0.85; display: flex; align-items: center; gap: 4px; justify-content: flex-end;">
+                                        <span style="width: 6px; height: 6px; background: #10B981; border-radius: 50%;"></span>
+                                        <span data-i18n="online_now">نشط الآن</span></p>
+                                </div>
+                                <div style="position: relative; flex-shrink: 0;">
+                                    <img src="" id="chatAvatar"
+                                        style="width: 44px; height: 44px; border-radius: 14px; object-fit: cover; border: 2px solid var(--primary-orange); box-shadow: 0 4px 12px rgba(255, 63, 0, 0.15);">
+                                    <span
+                                        style="position: absolute; bottom: -3px; left: -3px; width: 12px; height: 12px; background: #10B981; border: 2.5px solid #0F172A; border-radius: 50%;"></span>
+                                </div>
+                                <button class="mobile-back-btn"
+                                    style="display: none; background: transparent; border: none; color: white; width: 35px; height: 35px; align-items: center; justify-content: center; flex-shrink: 0; cursor: pointer;"
+                                    onclick="closeMobileChat()">
+                                    <i data-lucide="chevron-right" style="width: 24px; height: 24px;"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div id="chatBody"
+                            style="flex: 1; padding: 35px; overflow-y: auto; background: transparent; display: flex; flex-direction: column; gap: 20px;">
+                            <div style="height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0.3; text-align: center;">
+                                <i data-lucide="message-circle" style="width: 80px; height: 80px; margin-bottom: 20px;"></i>
+                                <h3 style="font-weight: 950; margin: 0;">اختر محادثة للبدء</h3>
+                                <p style="font-weight: 700; font-size: 14px;">تواصل مع الحرفيين لمناقشة تفاصيل طلبك</p>
+                            </div>
+                        </div>
+                        <div
+                            style="padding: 18px 25px; border-top: 1px solid var(--border-color); background: rgba(255, 255, 255, 0.02); display: flex; gap: 12px; align-items: center; flex-wrap: nowrap;">
+                            <button class="btn-premium btn-indigo"
+                                style="width: 54px; height: 54px; min-width: 54px; border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; padding: 0; box-shadow: 0 8px 20px rgba(255, 63, 0, 0.25);"
+                                onclick="sendChatMessage()">
+                                <i data-lucide="send-horizontal" style="width: 22px; height: 22px;"></i>
+                            </button>
+                            <input type="text" class="premium-input" id="chatMsgInput" placeholder="اكتب رسالة..."
+                                data-i18n-placeholder="write_message_placeholder"
+                                style="flex: 1; height: 54px; font-size: 15px; margin-top: 0; padding: 0 18px; border-radius: 14px; font-family: 'Tajawal', sans-serif; font-weight: 600;"
+                                onkeyup="if(event.key==='Enter') sendChatMessage()">
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Profile Tab -->
+            <section id="tab-profile" class="tab-section">
+                <!-- Profile Section -->
+                <div class="glass-card-v3" style="padding: 50px;">
+                    <div style="display: flex; gap: 40px; align-items: center; margin-bottom: 50px; flex-wrap: wrap;">
+                        <div style="position: relative;">
+                            <img id="clientAvatarView"
+                                src="https://ui-avatars.com/api/?name=C&background=FF4500&color=fff&size=200"
+                                style="width: 140px; height: 140px; border-radius: 40px; object-fit: cover; border: 4px solid rgba(255, 255, 255, 0.1); box-shadow: var(--shadow-premium);">
+                            <label for="cAvatar"
+                                style="position: absolute; bottom: -10px; right: -10px; width: 45px; height: 45px; background: var(--primary-orange); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 4px solid var(--bg-dark); transition: 0.3s;"
+                                class="hover-scale">
+                                <i data-lucide="camera" style="width: 20px;"></i>
+                                <input type="file" id="cAvatar" hidden accept="image/*"
+                                    onchange="uploadClientAvatar(event)">
+                            </label>
+                        </div>
+                        <div>
+                            <h2 style="font-weight: 950; font-size: 36px; margin-bottom: 5px; color: white;"
+                                id="cNameView">اسم الزبون</h2>
+                            <p style="color: var(--text-muted); font-weight: 800; font-size: 17px;"
+                                data-i18n="client_profile_subtitle">مرحباً بك في مساحتك الخاصة لإدارة طلباتك.</p>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px;">
+                        <div class="form-group">
+                            <label class="form-label" style="color: var(--text-muted) !important;" data-i18n="full_name">الاسم الكامل</label>
+                            <input type="text" class="premium-input" style="background: rgba(255,255,255,0.03) !important; color: white !important; border: 1px solid rgba(255,255,255,0.1) !important;" id="cNameInput" placeholder="أدخل اسمك الكامل">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" style="color: var(--text-muted) !important;" data-i18n="email">البريد الإلكتروني</label>
+                            <input type="email" class="premium-input" style="background: rgba(255,255,255,0.03) !important; color: white !important; border: 1px solid rgba(255,255,255,0.1) !important;" id="cEmailInput" placeholder="example@mail.com">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" style="color: var(--text-muted) !important;" data-i18n="phone">رقم الهاتف</label>
+                            <input type="text" class="premium-input" style="background: rgba(255,255,255,0.03) !important; color: white !important; border: 1px solid rgba(255,255,255,0.1) !important;" id="cPhoneInput" placeholder="06XXXXXXXX">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" style="color: var(--text-muted) !important;" data-i18n="city">المدينة</label>
+                            <input type="text" class="premium-input" style="background: rgba(255,255,255,0.03) !important; color: white !important; border: 1px solid rgba(255,255,255,0.1) !important;" id="cCityInput" placeholder="تارودانت">
+                        </div>
+
+                        <div
+                            style="grid-column: 1 / -1; padding-top: 30px; border-top: 1px solid rgba(255,255,255,0.05); margin-top: 20px;">
+                            <button class="btn-premium btn-indigo" onclick="saveClientProfile(this)"
+                                style="width: 100%; height: 75px; font-size: 20px; border-radius: 25px;">
+                                <i data-lucide="save"></i> <span data-i18n="save_profile_changes">حفظ التغييرات
+                                    والبروفايل</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Account Security -->
+                <div class="glass-card-v3" style="margin-top: 40px; padding: 50px;">
+                    <h3 style="font-weight: 950; font-size: 26px; margin-bottom: 35px; color: white;"
+                        data-i18n="account_security">أمان الحساب</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px;">
+                        <div class="form-group">
+                            <label class="form-label" style="color: var(--text-muted) !important;" data-i18n="new_password">كلمة مرور جديدة</label>
+                            <input type="password" class="premium-input" style="background: rgba(255,255,255,0.03) !important; color: white !important; border: 1px solid rgba(255,255,255,0.1) !important;" id="newPassInput" placeholder="********">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" style="color: var(--text-muted) !important;" data-i18n="confirm_new_password">تأكيد كلمة المرور</label>
+                            <input type="password" class="premium-input" style="background: rgba(255,255,255,0.03) !important; color: white !important; border: 1px solid rgba(255,255,255,0.1) !important;" id="confirmPassInput" placeholder="********">
+                        </div>
+                        <button class="btn-premium btn-outline-premium"
+                            style="grid-column: 1 / -1; height: 65px; border-radius: 20px; font-weight: 800;"
+                            onclick="updatePassword()" data-i18n="update_password">تحديث كلمة المرور</button>
+                    </div>
+                </div>
+            </section>
+
+
+        </main>
+    </div>
+
+    <script>
+        const clientDashboardData = { bookings: [], chats: [], messages: [], reviews: [], user: null };
+
+        async function loadClientDashboardData() {
+            if (!window.api) return clientDashboardData;
+            const current = await api.getCurrentUser();
+            if (!current.success || !current.user) {
+                window.location.href = 'login.html';
+                return clientDashboardData;
+            }
+            const currentUser = current.user;
+            clientDashboardData.user = currentUser;
+            const [bookingsRes, messagesRes, reviewsRes] = await Promise.all([
+                api.getBookings({ client_id: currentUser.id }),
+                api.getMessages(),
+                api.getReviews()
+            ]);
+            clientDashboardData.bookings = bookingsRes.success ? (bookingsRes.data || []) : [];
+            clientDashboardData.messages = messagesRes.success ? (messagesRes.data || []) : [];
+            clientDashboardData.reviews = reviewsRes.success ? (reviewsRes.data || []).filter((r) => String(r.client_id || '') === String(currentUser.id)) : [];
+            clientDashboardData.chats = [];
+            updateClientStats();
+            return clientDashboardData;
+        }
+
+        function updateClientStats() {
+            const active = clientDashboardData.bookings.filter((b) => ['accepted', 'pending', 'new'].includes(b.status)).length;
+            const unread = clientDashboardData.messages.filter((m) => String(m.receiver_id || m.receiverId || '') === String(clientDashboardData.user?.id || '') && m.status === 'unread').length;
+            const reviews = clientDashboardData.reviews.length;
+            const activeEl = document.getElementById('clientActiveBookingsCount');
+            const unreadEl = document.getElementById('clientUnreadMessagesCount');
+            const reviewsEl = document.getElementById('clientReviewsCount');
+            if (activeEl) activeEl.textContent = String(active).padStart(2, '0');
+            if (unreadEl) unreadEl.textContent = String(unread).padStart(2, '0');
+            if (reviewsEl) reviewsEl.textContent = String(reviews).padStart(2, '0');
+        }
+
+        function t(key) {
+            return (window.I18nManager && window.I18nManager.getString(key)) || key;
+        }
+
+        function toggleSidebar() {
+            document.querySelector('.client-sidebar').classList.toggle('active');
+            document.getElementById('sidebarOverlay').classList.toggle('active');
+        }
+
+        function switchDashboardTab(tabId, el) {
+            console.log("Switching to tab:", tabId);
+            if (window.innerWidth <= 1024) toggleSidebar();
+
+            document.querySelectorAll('.nav-link-premium').forEach(l => l.classList.remove('active'));
+            if (el) el.classList.add('active');
+
+            document.querySelectorAll('.tab-section').forEach(p => p.classList.remove('active'));
+            const target = document.getElementById(`tab-${tabId}`);
+            if (target) {
+                target.classList.add('active');
+                console.log("Tab found and activated");
+            } else {
+                console.error("Tab NOT found:", `tab-${tabId}`);
+            }
+
+            if (tabId === 'overview') updateClientLangBadge();
+            renderClientOverview();
+            if (tabId === 'orders') renderFullBookings();
+            if (tabId === 'messages') renderClientChats();
+            if (tabId === 'profile') loadClientProfile();
+
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function filterBookings(status, el) {
+            document.querySelectorAll('.btn-tab-filter').forEach(b => b.classList.remove('active'));
+            if (el) el.classList.add('active');
+            renderFullBookings(status);
+        }
+
+        function renderClientOverview() {
+            const list = document.getElementById('overviewBookingList');
+            if (!list) return;
+            const active = clientDashboardData.bookings.filter(b => b.status === 'accepted' || b.status === 'pending');
+
+            list.innerHTML = active.map(booking => `
+                <div class="booking-card-premium">
+                    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap; gap: 20px;">
+                        <div style="display: flex; gap: 25px; align-items: center;">
+                            <div style="position: relative;">
+                                <img src="${booking.avatar}" style="width: 70px; height: 70px; border-radius: 20px; object-fit: cover; border: 2px solid rgba(255,255,255,0.05);">
+                                <span style="position: absolute; bottom: -4px; right: -4px; width: 20px; height: 20px; background: ${getStatusColor(booking.status)}; border: 3px solid #0F172A; border-radius: 50%;"></span>
+                            </div>
+                            <div style="text-align: right;">
+                                <h4 style="font-weight: 950; font-size: 18px; margin: 0; color: white;">${booking.artisan}</h4>
+                                <p style="color: var(--text-muted); font-weight: 700; margin: 4px 0; font-size: 13px;">${booking.service} • ${booking.date}</p>
+                            </div>
+                        </div>
+                        <button class="btn-premium btn-outline-premium" style="padding: 10px 20px; border-radius: 12px; font-size: 13px;" onclick="switchDashboardTab('orders')">
+                            ${t('details') || 'التفاصيل'}
+                        </button>
+                    </div>
+                </div>
+            `).join('') || '<div style="padding: 40px; text-align: center; opacity: 0.5; font-weight: 800;">ما كاين حتى حجز دابا.</div>';
+
+            renderOverviewMessages();
+            if (window.lucide) lucide.createIcons();
+        }
+
+        async function renderOverviewMessages() {
+            const list = document.getElementById('overviewMessageList');
+            if (!list) return;
+
+            const currentUser = JSON.parse(localStorage.getItem('albane_user') || '{}');
+            const clientId = String(currentUser.id || 'guest');
+            const allMessages = window.api ? ((await api.getMessages()).data || []) : [];
+            
+            const threads = {};
+            allMessages.forEach(m => {
+                if (String(m.senderId || m.sender_id) === clientId || String(m.receiverId || m.receiver_id) === clientId) {
+                    const otherId = String((m.senderId || m.sender_id) === clientId ? (m.receiverId || m.receiver_id) : (m.senderId || m.sender_id));
+                    if (!threads[otherId] || new Date(m.timestamp || m.created_at) > new Date(threads[otherId].timestamp)) {
+                        threads[otherId] = {
+                            id: otherId,
+                            name: (m.senderId || m.sender_id) === clientId ? (m.receiverName || m.receiver_name || 'حرفي') : (m.senderName || m.sender_name),
+                            msg: m.content,
+                            timestamp: m.timestamp || m.created_at,
+                            avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(m.senderName || m.sender_name || 'A')}&background=random&color=fff`
+                        };
+                    }
+                }
+            });
+
+            const recent = Object.values(threads).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 3);
+            
+            list.innerHTML = recent.map(chat => `
+                <div class="glass-card-v3" style="padding: 20px; display: flex; gap: 15px; align-items: center; cursor: pointer; transition: 0.3s; border: 1px solid rgba(255,255,255,0.03);" onclick="openAndGoToChat('${chat.id}', true)">
+                    <div style="flex: 1; text-align: right;">
+                        <h5 style="margin: 0; font-weight: 950; color: white; font-size: 15px;">${chat.name}</h5>
+                        <p style="margin: 5px 0 0; font-size: 12px; color: var(--text-muted); font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 180px;">${chat.msg}</p>
+                    </div>
+                    <img src="${chat.avatar}" style="width: 50px; height: 50px; border-radius: 14px; object-fit: cover;">
+                </div>
+            `).join('') || `
+                <div style="grid-column: 1/-1; padding: 40px; text-align: center; opacity: 0.5; font-weight: 800; border: 1px dashed rgba(255,255,255,0.1); border-radius: 20px;">
+                    لا توجد رسائل حديثة.
+                </div>
+            `;
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function openAndGoToChat(id, isReal) {
+            switchDashboardTab('messages');
+            setTimeout(() => {
+                openClientChat(id, isReal);
+            }, 100);
+        }
+
+        function renderFullBookings(filterStatus = 'all') {
+            const list = document.getElementById('fullBookingList');
+            if (!list) return;
+            
+            let filtered = clientDashboardData.bookings;
+            if (filterStatus !== 'all') {
+                filtered = clientDashboardData.bookings.filter(b => b.status === filterStatus);
+            }
+
+            list.innerHTML = filtered.map(booking => `
+                <div class="booking-card-premium" style="border-inline-start: 6px solid ${getStatusColor(booking.status)}; border-radius: 30px;">
+                    <div style="display: flex; gap: 30px; align-items: center; flex-wrap: wrap;">
+                        <img src="${booking.avatar}" style="width: 95px; height: 95px; border-radius: 28px; object-fit: cover; border: 3px solid rgba(255,255,255,0.05); box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+                        <div>
+                            <h4 style="font-weight: 950; font-size: 26px; margin-bottom: 10px; color: white; ">${booking.artisan}</h4>
+                            <div style="display: flex; gap: 20px; color: var(--text-muted); font-size: 15px; font-weight: 800; flex-wrap: wrap;">
+                                <span style="display: flex; align-items: center; gap: 8px;"><i data-lucide="wrench" style="color: #FF3F00; width: 18px;"></i> ${booking.service}</span>
+                                <span style="display: flex; align-items: center; gap: 8px;"><i data-lucide="calendar" style="width: 18px; color: #3B82F6;"></i> ${booking.date}</span>
+                                <span class="status-badge-elite" style="background: ${getStatusColor(booking.status)}10; color: ${getStatusColor(booking.status)}; font-size: 12px; padding: 4px 12px;">● ${t(booking.status)}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                        ${booking.status === 'pending' ? `
+                            <button class="btn-premium btn-outline-premium" style="padding: 14px 30px; border-radius: 18px; font-weight: 950; font-size: 15px; color: #ef4444; border-color: rgba(239, 68, 68, 0.2);" onclick="cancelBooking(${booking.id})">
+                                <i data-lucide="x-circle" style="width: 18px;"></i> <span data-i18n="cancel_booking">إلغاء</span>
+                            </button>
+                        ` : ''}
+                        <button class="btn-premium btn-outline-premium" style="padding: 14px 30px; border-radius: 18px; font-weight: 950; font-size: 15px; background: rgba(255,255,255,0.03);" onclick="switchDashboardTab('messages')">
+                            <i data-lucide="message-circle" style="width: 18px;"></i> <span data-i18n="chat">مراسلة</span>
+                        </button>
+                        <button class="btn-premium btn-indigo" style="padding: 14px 30px; border-radius: 18px; font-weight: 950; font-size: 15px; box-shadow: 0 10px 25px rgba(255, 0, 0, 0.2);" onclick="handleQuickCall()">
+                            <i data-lucide="phone-call" style="width: 18px;"></i> <span data-i18n="call">اتصال مباشر</span>
+                        </button>
+                    </div>
+                </div>
+            `).join('') || '<div style="text-align:center; padding:100px; background: rgba(15, 23, 42, 0.3); border-radius: 40px; color: var(--text-muted); font-weight: 900; font-size: 18px;">ماعندك حتى حجز هنا.</div>';
+            if (window.lucide) lucide.createIcons();
+        }
+
+        async function cancelBooking(id) {
+            if (!confirm(t('confirm_cancel_booking') || '?? ??? ????? ?? ????? ??? ??????')) return;
+            const res = await api.cancelBooking(id);
+            if (res.success) {
+                await renderFullBookings();
+                await renderClientOverview();
+                if (window.DashboardManager) DashboardManager.showToast('booking_cancelled', 'success');
+            } else if (window.DashboardManager) {
+                DashboardManager.showToast(res.message || 'حدث خطأ أثناء حفظ التعديلات', 'error');
+            }
+        }
+
+        function getStatusColor(status) {
+            const colors = { accepted: '#10B981', completed: '#3B82F6', pending: '#F59E0B', rejected: '#FF3F00' };
+            return colors[status] || '#94A3B8';
+        }
+
+        /* ============================================================
+           MESSENGER SYSTEM REBORN (CLIENT)
+           ============================================================ */
+        let activeChatId = null;
+        let isRealChat = false;
+
+        async function renderClientChats() {
+            const list = document.getElementById('clientChatList');
+            if (!list) return;
+
+            const currentUser = JSON.parse(localStorage.getItem('albane_user') || '{}');
+            const clientId = String(currentUser.id || 'guest');
+            
+            // 1. Get real messages and group by artisan
+            const allMessages = window.api ? ((await api.getMessages()).data || []) : [];
+            const clientMessages = allMessages.filter(m => String(m.senderId || m.sender_id) === clientId || String(m.receiverId || m.receiver_id) === clientId);
+            
+            const realThreads = {};
+            clientMessages.forEach(m => {
+                const otherId = String((m.senderId || m.sender_id) === clientId ? (m.receiverId || m.receiver_id) : (m.senderId || m.sender_id));
+                if (!realThreads[otherId] || new Date(m.timestamp || m.created_at) > new Date(realThreads[otherId].timestamp)) {
+                    realThreads[otherId] = {
+                        id: otherId,
+                        name: (m.senderId || m.sender_id) === clientId ? (m.receiverName || m.receiver_name || 'حرفي') : (m.senderName || m.sender_name),
+                        msg: m.content,
+                        time: new Date(m.timestamp || m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                        timestamp: m.timestamp || m.created_at,
+                        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(m.senderName || m.sender_name || 'A')}&background=random&color=fff`,
+                        online: true,
+                        isReal: true
+                    };
+                }
+            });
+
+            const realChats = Object.values(realThreads);
+            const combinedChats = [...realChats, ...clientDashboardData.chats];
+
+            list.innerHTML = combinedChats.map((chat, idx) => `
+                <div class="chat-list-item ${activeChatId === String(chat.id) ? 'active' : ''}" 
+                     onclick="openClientChat('${chat.id}', ${chat.isReal || false})" 
+                     data-id="${chat.id}">
+                    <div style="flex: 1; text-align: right;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                            <span style="font-size: 10px; opacity: 0.6; font-weight: 800;">${chat.time}</span>
+                            <h5 style="font-weight: 950; font-size: 15px; margin: 0; color: white;">${chat.name}</h5>
+                        </div>
+                        <p style="font-size: 12px; opacity: 0.7; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 190px; font-weight: 700;">${chat.msg}</p>
+                    </div>
+                    <div style="position: relative; flex-shrink: 0;">
+                        <img src="${chat.avatar}" style="width: 48px; height: 48px; border-radius: 15px; object-fit: cover;">
+                        ${chat.online ? '<span style="position: absolute; bottom: 2px; right: 2px; width: 12px; height: 12px; background: #10B981; border: 2.5px solid #0F172A; border-radius: 50%;"></span>' : ''}
+                    </div>
+                </div>
+            `).join('') || '<div style="padding: 50px; text-align: center; opacity: 0.5; font-weight: 800;">لا توجد محادثات نشطة.</div>';
+
+            // REMOVED: Automatic openClientChat call to allow user to see the list first
+        }
+
+        async function openClientChat(id, isReal = false) {
+            activeChatId = String(id);
+            isRealChat = isReal;
+
+            const currentUser = JSON.parse(localStorage.getItem('albane_user') || '{}');
+            const clientId = String(currentUser.id || 'guest');
+            const body = document.getElementById('chatBody');
+            
+            // UI Updates
+            document.querySelectorAll('.chat-list-item').forEach(item => {
+                item.classList.toggle('active', item.getAttribute('data-id') === activeChatId);
+            });
+
+            let chatInfo;
+            if (isReal) {
+                const allMessages = window.api ? ((await api.getMessages()).data || []) : [];
+                const thread = allMessages.filter(m => 
+                    (String(m.senderId || m.sender_id) === clientId && String(m.receiverId || m.receiver_id) === activeChatId) ||
+                    (String(m.senderId || m.sender_id) === activeChatId && String(m.receiverId || m.receiver_id) === clientId)
+                ).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+                if (thread.length > 0) {
+                    const otherMsg = thread.find(m => String(m.senderId || m.sender_id) === activeChatId);
+                    chatInfo = {
+                        name: otherMsg ? otherMsg.senderName : 'حرفي',
+                        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(otherMsg ? otherMsg.senderName : 'A')}&background=random&color=fff`
+                    };
+                    body.innerHTML = thread.map(m => `
+                        <div class="chat-bubble ${String(m.senderId || m.sender_id) === clientId ? 'bubble-out' : 'bubble-in'}">
+                            ${m.content}
+                            <span class="chat-time">${new Date(m.timestamp || m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                    `).join('');
+                }
+            } else {
+                chatInfo = clientDashboardData.chats.find(c => String(c.id) === activeChatId);
+                if (chatInfo) {
+                    body.innerHTML = `
+                        <div class="chat-bubble bubble-in">
+                            أهلاً جلال، نعم أنا متوفر اليوم. ربع ساعة وأكون عندك في حي المحايطة.
+                            <span class="chat-time">10:17 AM</span>
+                        </div>
+                        <div class="chat-bubble bubble-out">
+                            مرحباً يا معلم، هل أنت متاح للعمل اليوم في تارودانت؟ أحتاج لإصلاح ضروري في نظام الكهرباء.
+                            <span class="chat-time">10:15 AM</span>
+                        </div>
+                    `;
+                }
+            }
+
+            if (chatInfo) {
+                document.getElementById('chatName').textContent = chatInfo.name;
+                document.getElementById('chatAvatar').src = chatInfo.avatar;
+            }
+
+            // Fix for Mobile "Slide-in" Chat
+            document.querySelector('.premium-messenger').classList.add('show-chat');
+            
+            body.scrollTop = body.scrollHeight;
+            if (window.lucide) lucide.createIcons();
+        }
+
+        async function sendChatMessage() {
+            const inp = document.getElementById('chatMsgInput');
+            const val = inp.value.trim();
+            if (!val || !activeChatId) return;
+
+            const currentUser = JSON.parse(localStorage.getItem('albane_user') || '{}');
+            const clientId = String(currentUser.id || 'guest');
+            const body = document.getElementById('chatBody');
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            // UI Update
+            body.innerHTML += `
+                <div class="chat-bubble bubble-out">
+                    ${val}
+                    <span class="chat-time">${time}</span>
+                </div>
+            `;
+
+            // Persistent Storage
+            if (isRealChat) {
+                const newMessage = {
+                    id: Date.now(),
+                    artisanId: activeChatId,
+                    senderId: clientId,
+                    senderName: currentUser.name || 'الزبون',
+                    receiverId: activeChatId,
+                    content: val,
+                    timestamp: new Date().toISOString(),
+                    status: 'unread',
+                    type: 'client_msg'
+                };
+                await api.addMessage(newMessage);
+            }
+
+            inp.value = '';
+            body.scrollTop = body.scrollHeight;
+        }
+
+        function closeMobileChat() {
+            document.querySelector('.premium-messenger').classList.remove('show-chat');
+        }
+
+        function handleQuickCall() {
+            if (window.DashboardManager) {
+                DashboardManager.showToast('جاري الاتصال... سيتم تحويلك للمكالمة الصوتية.', 'info');
+            } else {
+                alert('جاري الاتصال...');
+            }
+        }
+
+        function loadClientProfile() {
+            const user = JSON.parse(localStorage.getItem('albane_user') || localStorage.getItem('albane_user') || '{}');
+            document.getElementById('clientName').textContent = user.name || 'الزبون';
+            document.getElementById('cNameView').textContent = user.name || 'الزبون الوفي';
+            document.getElementById('cNameInput').value = user.name || '';
+            document.getElementById('cEmailInput').value = user.email || '';
+            document.getElementById('cPhoneInput').value = user.phone || '';
+            document.getElementById('cCityInput').value = user.city || 'تارودانت';
+            if (user.avatar) document.getElementById('clientAvatarView').src = user.avatar;
+        }
+
+        async function saveClientProfile(btn) {
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i data-lucide="loader" class="spin"></i> ' + (t('saving') || '???? ?????...');
+            if (window.lucide) lucide.createIcons();
+
+            const user = JSON.parse(localStorage.getItem('albane_user') || '{}');
+            user.name = document.getElementById('cNameInput').value;
+            user.email = document.getElementById('cEmailInput').value;
+            user.phone = document.getElementById('cPhoneInput').value;
+            user.city = document.getElementById('cCityInput').value;
+            user.role = user.role || 'client';
+
+            const res = await api.updateProfile(user);
+            if (res.success) {
+                if (window.DashboardManager) DashboardManager.showToast('changes_saved_success', 'success');
+                loadClientProfile();
+            } else if (window.DashboardManager) {
+                DashboardManager.showToast(res.message || 'حدث خطأ أثناء حفظ التعديلات', 'error');
+            }
+            btn.innerHTML = originalText;
+            if (window.lucide) lucide.createIcons();
+        }
+
+        async function updatePassword() {
+            const p1 = document.getElementById('newPassInput').value;
+            const p2 = document.getElementById('confirmPassInput').value;
+            if (!p1 || p1 !== p2) {
+                if (window.DashboardManager) DashboardManager.showToast('passwords_not_match', 'error');
+                return;
+            }
+            if (p1.length < 6) {
+                if (window.DashboardManager) DashboardManager.showToast('password_too_short', 'error');
+                return;
+            }
+            const result = await api.updatePassword(p1);
+            if (!result.success) {
+                if (window.DashboardManager) DashboardManager.showToast(result.message || 'حدث خطأ', 'error');
+                return;
+            }
+            if (window.DashboardManager) DashboardManager.showToast('password_updated_success', 'success');
+            document.getElementById('newPassInput').value = '';
+            document.getElementById('confirmPassInput').value = '';
+        }
+
+        function uploadClientAvatar(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                document.getElementById('clientAvatarView').src = ev.target.result;
+                const user = JSON.parse(localStorage.getItem('albane_user') || localStorage.getItem('albane_user') || '{}');
+                user.avatar = ev.target.result;
+                localStorage.setItem('albane_user', JSON.stringify(user));
+                if (window.DashboardManager) DashboardManager.showToast('avatar_updated', 'success');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function logout() { if (window.DashboardManager) DashboardManager.logout(); else { localStorage.clear(); window.location.href = 'index.html'; } }
+        function handleQuickCall() { window.location.href = 'tel:0600000000'; }
+
+        // Initial Load
+        
+        function toggleClientLangDropdown(e) {
+            if (window.I18nManager && typeof window.I18nManager.toggleLanguageDropdown === 'function') {
+                window.I18nManager.toggleLanguageDropdown(e);
+            } else {
+                e.stopPropagation();
+                const switcher = e.currentTarget ? e.currentTarget.closest('.dashboard-lang-switcher') : null;
+                const dd = document.getElementById('clientLangDropdown');
+                if (dd) dd.classList.toggle('show');
+                if (switcher) switcher.classList.toggle('open');
+            }
+        }
+
+        function switchPlatformLang(lang) {
+            if (window.I18nManager && typeof window.I18nManager.setLanguage === 'function') {
+                window.I18nManager.setLanguage(lang);
+            } else {
+                localStorage.setItem('albane_lang', lang);
+                window.location.reload();
+            }
+        }
+
+        window.addEventListener('click', (e) => {
+            const dd = document.getElementById('clientLangDropdown');
+            if (dd && !e.target.closest('.dashboard-lang-switcher')) {
+                dd.classList.remove('show');
+                const switcher = dd.closest('.dashboard-lang-switcher');
+                if (switcher) switcher.classList.remove('open');
+            }
+        });
+
+        function updateClientLangBadge() {
+            const current = (localStorage.getItem('albane_lang') || 'ar').toUpperCase();
+            const badge = document.getElementById('currentClientLangLabel');
+            if (badge) badge.textContent = current;
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const token = localStorage.getItem('albane_token');
+            const user = JSON.parse(localStorage.getItem('albane_user') || '{}');
+            if (!token || !user.email || user.role !== 'client') {
+                window.location.replace(user.role === 'artisan'
+                    ? 'artisan-dashboard.html'
+                    : user.role === 'admin'
+                        ? 'admin-dashboard.html'
+                        : 'login.html');
+                return;
+            }
+            await loadClientDashboardData();
+            renderClientOverview();
+            renderFullBookings();
+            renderClientChats();
+            loadClientProfile();
+            if (window.lucide) lucide.createIcons();
+            if (window.I18nManager) window.I18nManager.updateDOM();
+        });
+    </script>
+
+        <script src="platform-actions.js"></script>
+</body>
+
+</html>
